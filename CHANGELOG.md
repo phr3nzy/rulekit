@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch processing support for large datasets
 - Comprehensive test suite with unit and integration tests
 - Performance benchmarks
-- Type-safe rule validation using Zod schemas
+- Type-safe rule validation using Zod (with plans to explore more performant alternatives)
 - Support for complex nested AND/OR conditions
 - Cross-selling configuration support
 - Improved TypeScript types and documentation

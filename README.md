@@ -8,10 +8,10 @@ A powerful and flexible toolkit for building rule-based product recommendations 
 - 💾 Built-in Caching: Memory-based caching with TTL support
 - 🔍 Type-Safe: Full TypeScript support with comprehensive type definitions
 - 🧩 Flexible Rules: Support for complex nested AND/OR conditions
-- 📦 Zero Dependencies: Only uses Zod for schema validation
+- 📦 Minimal Dependencies: Uses Zod for schema validation
 - 🔄 Cross-Selling: Built-in support for cross-selling configurations
 - 📊 Benchmarks: Includes performance benchmarks
-- 🧪 Well Tested: Comprehensive test suite with 100% coverage
+- 🧪 Well Tested: Comprehensive test suite with high coverage
 
 ## Installation
 
@@ -161,6 +161,18 @@ Sample benchmark results:
 - Complex nested rules (1000 products): ~40 ops/sec
 - Large product set (10000 products): ~170 ops/sec
 - Cache performance (repeated queries): ~4,800 ops/sec
+
+### Future Performance Improvements
+
+While the current implementation is highly optimized, there are several areas identified for potential future performance enhancements:
+
+1. **Parallel Processing**: Implementing worker threads for batch processing
+2. **Rule Optimization**: Pre-processing rules to optimize evaluation order
+3. **Cache Strategies**: Advanced caching strategies for specific use cases
+4. **Memory Management**: Fine-tuned memory management for very large datasets
+5. **Rule Validation**: Replacing Zod with a more performant validation library/implementation
+
+These improvements will be explored in future releases while maintaining the current high test coverage and type safety.
 
 ## API Reference
 
