@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-// Base comparison operators as const
+/**
+ * Base comparison operators
+ */
 export const ComparisonOperators = {
 	eq: 'eq',
 	ne: 'ne',
@@ -12,28 +14,40 @@ export const ComparisonOperators = {
 	notIn: 'notIn',
 } as const;
 
-// Derive operator types from the const object
+/**
+ * Type for comparison operators
+ */
 export type ComparisonOperator = keyof typeof ComparisonOperators;
 
-// Value types that can be used in rules
+/**
+ * Valid value types for rules
+ */
 export type RuleValue = string | number | boolean | Array<string | number>;
 
-// Base filter with strict operator typing
+/**
+ * Base filter type with operator constraints
+ */
 export type BaseFilter = {
 	[K in ComparisonOperator]?: RuleValue;
 };
 
-// Product attributes as const
+/**
+ * Product attributes that can be used in rules
+ */
 export const ProductAttributes = {
 	price: 'price',
 	category: 'category',
 	brand: 'brand',
 } as const;
 
-// Derive attribute types from the const object
+/**
+ * Type for product attributes
+ */
 export type ProductAttribute = keyof typeof ProductAttributes;
 
-// Single rule structure with recursive type for AND/OR
+/**
+ * Single rule structure with recursive AND/OR support
+ */
 export type Rule = {
 	[K in ProductAttribute]?: BaseFilter;
 } & {
@@ -41,44 +55,17 @@ export type Rule = {
 	or?: Rule[];
 };
 
-// Zod schema for validation
-export const ruleValueSchema = z.union([
-	z.string(),
-	z.number(),
-	z.boolean(),
-	z.array(z.union([z.string(), z.number()])),
-]);
-
-// Create a schema for each operator
-const operatorSchema = z.object({}).catchall(ruleValueSchema);
-
-// Create a schema for product attributes
-const attributeSchema = z.object({
-	[ProductAttributes.price]: operatorSchema.optional(),
-	[ProductAttributes.category]: operatorSchema.optional(),
-	[ProductAttributes.brand]: operatorSchema.optional(),
-});
-
-// Recursive type for the rule schema
-export const ruleSchema: z.ZodType<Rule> = z.lazy(() =>
-	attributeSchema.extend({
-		and: z.array(z.lazy(() => ruleSchema)).optional(),
-		or: z.array(z.lazy(() => ruleSchema)).optional(),
-	}),
-);
-
-// Cross-selling rule set with source and recommendation rules
+/**
+ * Cross-selling rule set with source and recommendation rules
+ */
 export type CrossSellingRuleSet = {
 	sourceRules: Rule[];
 	recommendationRules: Rule[];
 };
 
-export const crossSellingRuleSetSchema = z.object({
-	sourceRules: z.array(ruleSchema),
-	recommendationRules: z.array(ruleSchema),
-});
-
-// Configuration type with metadata
+/**
+ * Configuration type for cross-selling rules
+ */
 export type CrossSellingConfig = {
 	id: string;
 	name: string;
@@ -88,6 +75,34 @@ export type CrossSellingConfig = {
 	createdAt: Date;
 	updatedAt: Date;
 };
+
+// Validation schemas
+export const ruleValueSchema = z.union([
+	z.string(),
+	z.number(),
+	z.boolean(),
+	z.array(z.union([z.string(), z.number()])),
+]);
+
+const operatorSchema = z.object({}).catchall(ruleValueSchema);
+
+const attributeSchema = z.object({
+	[ProductAttributes.price]: operatorSchema.optional(),
+	[ProductAttributes.category]: operatorSchema.optional(),
+	[ProductAttributes.brand]: operatorSchema.optional(),
+});
+
+export const ruleSchema: z.ZodType<Rule> = z.lazy(() =>
+	attributeSchema.extend({
+		and: z.array(z.lazy(() => ruleSchema)).optional(),
+		or: z.array(z.lazy(() => ruleSchema)).optional(),
+	}),
+);
+
+export const crossSellingRuleSetSchema = z.object({
+	sourceRules: z.array(ruleSchema),
+	recommendationRules: z.array(ruleSchema),
+});
 
 export const crossSellingConfigSchema = z.object({
 	id: z.string(),

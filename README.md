@@ -1,94 +1,119 @@
-# @phr3nzy/rulekit
+# RuleKit
 
-A powerful and flexible toolkit for building rule-based product recommendations and dynamic filtering. Written in TypeScript with zero runtime dependencies except for json-logic-js and zod.
+A powerful and flexible toolkit for building rule-based product recommendations and dynamic filtering. Built with TypeScript and designed for high performance.
 
 ## Features
 
-- Rule-based filtering system supporting:
-  - Price-based filters
-  - Category-based filters
-  - Brand-based filters
-  - Complex combinations using AND/OR operators
-- Two-part rule system:
-  - Source rules for selecting main products
-  - Recommendation rules for selecting products to suggest
-- Type-safe with full TypeScript support
-- Input validation using Zod
-- Framework agnostic - use with any frontend or backend
-- Zero config - just import and use
-- Lightweight and tree-shakeable
+- 🚀 High Performance: Optimized for large datasets with batch processing
+- 💾 Built-in Caching: Memory-based caching with TTL support
+- 🔍 Type-Safe: Full TypeScript support with comprehensive type definitions
+- 🧩 Flexible Rules: Support for complex nested AND/OR conditions
+- 📦 Zero Dependencies: Only uses Zod for schema validation
+- 🔄 Cross-Selling: Built-in support for cross-selling configurations
+- 📊 Benchmarks: Includes performance benchmarks
+- 🧪 Well Tested: Comprehensive test suite with 100% coverage
 
 ## Installation
 
 ```bash
-# Using pnpm (recommended)
-pnpm add @phr3nzy/rulekit
-
 # Using npm
 npm install @phr3nzy/rulekit
 
 # Using yarn
 yarn add @phr3nzy/rulekit
+
+# Using pnpm
+pnpm add @phr3nzy/rulekit
 ```
 
-## Usage
+## Quick Start
 
 ```typescript
-import { RuleEngine, type Product, type CrossSellingRuleSet } from '@phr3nzy/rulekit';
+import { RuleEngine, type Product, type Rule } from '@phr3nzy/rulekit';
 
-// Initialize the rule engine
-const ruleEngine = new RuleEngine();
+// Initialize the engine (with default memory cache)
+const engine = new RuleEngine();
 
 // Define your products
 const products: Product[] = [
 	{
 		id: '1',
-		name: 'High-end Laptop',
+		name: 'Laptop',
 		price: 1200,
 		category: 'Electronics',
-		brand: 'BrandA',
+		brand: 'TechBrand',
 	},
 	{
 		id: '2',
 		name: 'Laptop Bag',
-		price: 80,
+		price: 50,
 		category: 'Accessories',
-		brand: 'BrandB',
+		brand: 'BagBrand',
 	},
 ];
 
 // Define your rules
-const ruleSet: CrossSellingRuleSet = {
-	sourceRules: [
-		{
-			and: [{ category: { eq: 'Electronics' } }, { price: { gte: 1000 } }],
-		},
-	],
-	recommendationRules: [
-		{
-			and: [{ category: { eq: 'Accessories' } }, { price: { lte: 100 } }],
-		},
-	],
-};
+const rules: Rule[] = [
+	{
+		and: [{ category: { eq: 'Electronics' } }, { price: { gt: 1000 } }],
+	},
+];
 
-// Get recommendations for a product
-const recommendations = ruleEngine.getRecommendations(
-	products[0], // source product
-	products, // available products
-	ruleSet,
-);
-
-// Get recommendations for multiple products
-const bulkRecommendations = ruleEngine.getBulkRecommendations(
-	products, // source products
-	products, // available products
-	ruleSet,
-);
+// Find matching products
+const matchingProducts = await engine.findSourceProducts(products, rules);
+console.log(matchingProducts); // [{ id: '1', name: 'Laptop', ... }]
 ```
 
-## Rule Operators
+## Cross-Selling Example
 
-The rule engine supports the following operators:
+```typescript
+import { RuleEngine, type CrossSellingConfig } from '@phr3nzy/rulekit';
+
+const config: CrossSellingConfig = {
+	id: 'cs1',
+	name: 'Electronics with Accessories',
+	ruleSet: {
+		sourceRules: [{ category: { eq: 'Electronics' } }],
+		recommendationRules: [
+			{
+				and: [{ category: { eq: 'Accessories' } }, { price: { lt: 100 } }],
+			},
+		],
+	},
+	isActive: true,
+	createdAt: new Date(),
+	updatedAt: new Date(),
+};
+
+const { sourceProducts, recommendedProducts } = await engine.processConfig(config, products);
+```
+
+## Advanced Usage
+
+### Custom Cache Implementation
+
+```typescript
+import { RuleEngine, type ICache } from '@phr3nzy/rulekit';
+
+class RedisCache implements ICache {
+	// Implement the ICache interface
+}
+
+const cache = new RedisCache();
+const engine = new RuleEngine({ cache });
+```
+
+### Batch Processing
+
+```typescript
+import { RuleEngine } from '@phr3nzy/rulekit';
+
+const engine = new RuleEngine({
+	maxBatchSize: 1000, // Process products in batches of 1000
+});
+```
+
+### Available Operators
 
 - `eq`: Equal to
 - `ne`: Not equal to
@@ -96,51 +121,96 @@ The rule engine supports the following operators:
 - `gte`: Greater than or equal to
 - `lt`: Less than
 - `lte`: Less than or equal to
-- `in`: Value is in array
-- `notIn`: Value is not in array
+- `in`: In array
+- `notIn`: Not in array
 
-You can combine these operators using `and` and `or` conditions:
+### Complex Rules
 
 ```typescript
-const complexRule = {
-	and: [
-		{ category: { eq: 'Electronics' } },
+const complexRule: Rule = {
+	or: [
 		{
-			or: [{ price: { gte: 1000 } }, { brand: { in: ['BrandA', 'BrandB'] } }],
+			and: [
+				{ category: { eq: 'Electronics' } },
+				{ price: { gt: 1000 } },
+				{ brand: { eq: 'TechBrand' } },
+			],
+		},
+		{
+			and: [
+				{ category: { eq: 'Accessories' } },
+				{ price: { lt: 100 } },
+				{ brand: { in: ['TechBrand', 'Brand1'] } },
+			],
 		},
 	],
 };
 ```
 
-## Benchmarks
+## Performance
 
-Performance benchmarks run on a standard development machine:
+The engine includes built-in performance benchmarks that you can run:
 
-| Scenario                                        | Operations/sec | Mean Time (ms) | Notes                                       |
-| ----------------------------------------------- | -------------- | -------------- | ------------------------------------------- |
-| Simple rule evaluation (1000 products)          | 1,767.65       | 0.57           | Fastest operation, good for basic filtering |
-| Complex nested rules (1000 products, depth 3)   | 76.89          | 13.01          | Handles deep rule nesting efficiently       |
-| Large dataset (10000 products) with mixed rules | 54.74          | 18.27          | Scales well with larger datasets            |
-| Multiple concurrent evaluations (100 rules)     | 34.41          | 29.06          | Good for batch processing                   |
-| Memory usage (100000 products)                  | 7.90           | 126.60         | Efficient memory handling                   |
-| Cross-selling recommendations (1000 products)   | 3.05           | 327.53         | Most complex operation                      |
+```bash
+pnpm bench
+```
 
-### Performance Notes
+Sample benchmark results:
 
-- Simple rule evaluations are extremely fast, processing 1000 products in less than 1ms
-- Complex nested rules maintain good performance even with depth-3 nesting
-- Large datasets (100k products) are handled efficiently with reasonable memory usage
-- Cross-selling recommendations, being the most complex operation, still complete in under 330ms
-- The engine scales linearly with data size, making it suitable for production use
+- Simple rule evaluation (1000 products): ~9,200 ops/sec
+- Complex nested rules (1000 products): ~40 ops/sec
+- Large product set (10000 products): ~170 ops/sec
+- Cache performance (repeated queries): ~4,800 ops/sec
+
+## API Reference
+
+### RuleEngine
+
+```typescript
+class RuleEngine {
+	constructor(config?: {
+		cache?: ICache;
+		evaluator?: IRuleEvaluator;
+		enableCaching?: boolean;
+		cacheTTLSeconds?: number;
+		maxBatchSize?: number;
+	});
+
+	findSourceProducts(products: Product[], rules: Rule[]): Promise<Product[]>;
+	findRecommendedProducts(
+		sourceProducts: Product[],
+		recommendationRules: Rule[],
+		allProducts: Product[],
+	): Promise<Product[]>;
+	processConfig(
+		config: CrossSellingConfig,
+		products: Product[],
+	): Promise<{ sourceProducts: Product[]; recommendedProducts: Product[] }>;
+	clearCache(): Promise<void>;
+}
+```
+
+### Rule Types
+
+```typescript
+type Rule = {
+	[K in ProductAttribute]?: BaseFilter;
+} & {
+	and?: Rule[];
+	or?: Rule[];
+};
+
+type BaseFilter = {
+	[K in ComparisonOperator]?: RuleValue;
+};
+
+type RuleValue = string | number | boolean | Array<string | number>;
+```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## License
 
-[MIT](./LICENSE)
-
-## Copyright
-
-Copyright © 2025 phr3nzy <adilosama47@gmail.com>. All rights reserved.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

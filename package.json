@@ -1,6 +1,6 @@
 {
   "name": "@phr3nzy/rulekit",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A powerful and flexible toolkit for building rule-based product recommendations and dynamic filtering",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -53,19 +53,18 @@
     "cross-selling",
     "e-commerce",
     "typescript",
-    "json-logic"
+    "caching",
+    "performance"
   ],
   "author": "phr3nzy <adilosama47@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "json-logic-js": "^2.0.2",
     "zod": "^3.22.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
     "@eslint/js": "^9.19.0",
-    "@types/json-logic-js": "^2.0.3",
     "@types/node": "^20.8.2",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",

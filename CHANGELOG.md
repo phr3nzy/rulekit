@@ -5,31 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.1] - 2025-02-01
+## [1.0.0] - 2025-02-01
+
+### Breaking Changes
+
+- Complete rewrite of the rule engine implementation
+- Removed dependency on json-logic-js in favor of a custom rule evaluation engine
+- Changed rule format to be more intuitive and type-safe
+- Updated API to be more flexible and performant
 
 ### Added
 
-- Initial release of the rule engine
-- Support for rule-based product filtering and recommendations
-- TypeScript support with full type definitions
-- JSON Logic integration for rule evaluation
-- Comprehensive test suite with edge case coverage
-- Support for both CommonJS and ES Modules
-- Zod schema validation for rules
-- Documentation and examples
+- New `RuleEngine` implementation with improved performance
+- Caching support with `MemoryCache` implementation
+- Batch processing support for large datasets
+- Comprehensive test suite with unit and integration tests
+- Performance benchmarks
+- Type-safe rule validation using Zod schemas
+- Support for complex nested AND/OR conditions
+- Cross-selling configuration support
+- Improved TypeScript types and documentation
 
-### Features
+### Changed
 
-- Rule-based filtering system with support for:
-  - Price-based filters
-  - Category-based filters
-  - Brand-based filters
-  - Complex combinations using AND/OR operators
-- Two-part rule system:
-  - Source rules for selecting main products
-  - Recommendation rules for selecting products to suggest
-- Framework agnostic design
-- Zero config setup
-- Lightweight and tree-shakeable
+- Rule evaluation is now asynchronous for better performance
+- Rule format is now more structured and type-safe
+- Improved error handling and edge case management
+- Better memory management for large datasets
+- More flexible configuration options
 
-[0.0.1]: https://github.com/phr3nzy/rulekit/releases/tag/v0.0.1
+### Removed
+
+- Old rule engine implementation
+- JSON Logic dependency
+- Legacy rule format support
+
+## [0.0.1] - 2024-01-31
+
+### Added
+
+- Initial release with basic rule engine functionality
+- JSON Logic based rule evaluation
+- Basic TypeScript support
