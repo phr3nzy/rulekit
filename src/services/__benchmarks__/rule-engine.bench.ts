@@ -44,38 +44,36 @@ describe('RuleEngine Benchmarks', () => {
 	};
 
 	// Benchmark: Simple rule evaluation
-	bench('simple rule evaluation (1000 products)', () => {
+	bench('simple rule evaluation (1000 products)', async () => {
 		const products = generateProducts(1000);
 		const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
-		ruleEngine.findSourceProducts(products, rules);
+		await ruleEngine.findSourceProducts(products, rules);
 	});
 
 	// Benchmark: Complex nested rules
-	bench('complex nested rules (1000 products, depth 3)', () => {
+	bench('complex nested rules (1000 products)', async () => {
 		const products = generateProducts(1000);
 		const rules = generateComplexRules(3);
-		ruleEngine.findSourceProducts(products, rules);
+		await ruleEngine.findSourceProducts(products, rules);
 	});
 
-	// Benchmark: Large dataset with mixed rules
-	bench('large dataset (10000 products) with mixed rules', () => {
+	// Benchmark: Large product set
+	bench('large product set (10000 products)', async () => {
 		const products = generateProducts(10000);
 		const rules: Rule[] = [
 			{
 				and: [
-					{ price: { gte: 100, lte: 500 } },
-					{ category: { in: ['Electronics', 'Accessories'] } },
-					{
-						or: [{ brand: { eq: 'BrandA' } }, { brand: { eq: 'BrandB' } }],
-					},
+					{ category: { eq: 'Electronics' } },
+					{ price: { gt: 500 } },
+					{ brand: { in: ['BrandA', 'BrandB'] } },
 				],
 			},
 		];
-		ruleEngine.findSourceProducts(products, rules);
+		await ruleEngine.findSourceProducts(products, rules);
 	});
 
-	// Benchmark: Cross-selling recommendations
-	bench('cross-selling recommendations (1000 products)', () => {
+	// Benchmark: Bulk recommendations
+	bench('bulk recommendations (1000 products)', async () => {
 		const products = generateProducts(1000);
 		const ruleSet: CrossSellingRuleSet = {
 			sourceRules: [{ category: { eq: 'Electronics' } }],
@@ -83,36 +81,35 @@ describe('RuleEngine Benchmarks', () => {
 				{
 					and: [
 						{ category: { eq: 'Accessories' } },
-						{ price: { lte: 200 } },
+						{ price: { lt: 100 } },
 						{ brand: { in: ['BrandA', 'BrandB'] } },
 					],
 				},
 			],
 		};
-		ruleEngine.getBulkRecommendations(products, products, ruleSet);
+		await ruleEngine.getBulkRecommendations(products, products, ruleSet);
 	});
 
-	// Benchmark: Multiple concurrent rule evaluations
-	bench('multiple concurrent evaluations (100 rules, 1000 products)', () => {
+	// Benchmark: Cache performance
+	bench('cache performance (repeated queries)', async () => {
 		const products = generateProducts(1000);
-		const rules = Array.from({ length: 100 }, (_, i) => ({
-			and: [{ price: { gt: i * 10 } }, { category: { in: ['Electronics', 'Accessories'] } }],
-		}));
-		ruleEngine.findSourceProducts(products, rules);
+		const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+		// First call to populate cache
+		await ruleEngine.findSourceProducts(products, rules);
+		// Second call should use cache
+		await ruleEngine.findSourceProducts(products, rules);
 	});
 
-	// Benchmark: Memory usage with large datasets
-	bench('memory usage (100000 products)', () => {
-		const products = generateProducts(100000);
+	// Benchmark: Mixed operations
+	bench('mixed operations', async () => {
+		const products = generateProducts(1000);
 		const rules: Rule[] = [
-			{
-				or: [
-					{ price: { gte: 500 } },
-					{ category: { eq: 'Electronics' } },
-					{ brand: { in: ['BrandA', 'BrandB'] } },
-				],
-			},
+			{ category: { eq: 'Electronics' } },
+			{ price: { gt: 500 } },
+			{ brand: { in: ['BrandA', 'BrandB'] } },
 		];
-		ruleEngine.findSourceProducts(products, rules);
+		await ruleEngine.findSourceProducts(products, rules);
+		await ruleEngine.findSourceProducts(products, [rules[0]]);
+		await ruleEngine.findSourceProducts(products, [rules[1]]);
 	});
 });

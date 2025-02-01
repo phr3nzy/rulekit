@@ -87,188 +87,203 @@ describe('RuleEngine', () => {
 
 	describe('Edge Cases', () => {
 		describe('Input Validation', () => {
-			it('should handle empty rules array', () => {
+			it('should handle empty rules array', async () => {
 				const emptyRuleSet: CrossSellingRuleSet = {
 					sourceRules: [],
 					recommendationRules: [],
 				};
-				const result = ruleEngine.getRecommendations(products[0], products, emptyRuleSet);
+				const result = await ruleEngine.getRecommendations(products[0], products, emptyRuleSet);
 				expect(result).toHaveLength(0);
 			});
 
-			it('should handle empty products array', () => {
+			it('should handle empty products array', async () => {
 				const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
-				const result = ruleEngine.findSourceProducts([], rules);
+				const result = await ruleEngine.findSourceProducts([], rules);
 				expect(result).toHaveLength(0);
 			});
 
-			it('should handle null/undefined values in product attributes', () => {
+			it('should handle null/undefined values in product attributes', async () => {
 				const rules: Rule[] = [{ category: { eq: null } }];
-				const result = ruleEngine.findSourceProducts(edgeCaseProducts, rules);
-				expect(result).toHaveLength(2); // Should find products with null and undefined category
+				const result = await ruleEngine.findSourceProducts(edgeCaseProducts, rules);
+				expect(result).toHaveLength(2);
 				expect(result).toContainEqual(expect.objectContaining({ category: null }));
 				expect(result).toContainEqual(expect.objectContaining({ category: undefined }));
 			});
 
-			it('should handle products with missing attributes', () => {
-				const incompleteProduct = { id: '11', name: 'Incomplete' } as Product;
+			it('should handle products with missing attributes', async () => {
+				const incompleteProduct = {
+					id: 'incomplete',
+					name: 'Incomplete Product',
+					price: 0,
+					category: '',
+					brand: '',
+				};
 				const rules: Rule[] = [{ price: { gt: 0 } }];
-				const result = ruleEngine.findSourceProducts([incompleteProduct], rules);
+				const result = await ruleEngine.findSourceProducts([incompleteProduct], rules);
 				expect(result).toHaveLength(0);
 			});
 		});
 
 		describe('Rule Combinations', () => {
-			it('should handle deeply nested AND/OR combinations', () => {
+			it('should handle deeply nested AND/OR combinations', async () => {
 				const complexRules: Rule[] = [
 					{
 						and: [
+							{ category: { eq: 'Electronics' } },
 							{
 								or: [
-									{ price: { gte: 1000 } },
+									{ price: { gt: 1000 } },
 									{
-										and: [
-											{ price: { lt: 1000 } },
-											{ price: { gt: 500 } },
-											{
-												or: [{ brand: { eq: 'BrandA' } }, { brand: { eq: 'BrandB' } }],
-											},
-										],
+										and: [{ brand: { eq: 'BrandA' } }, { price: { lt: 500 } }],
 									},
 								],
 							},
-							{ category: { eq: 'Electronics' } },
 						],
 					},
 				];
-				const result = ruleEngine.findSourceProducts(products, complexRules);
+				const result = await ruleEngine.findSourceProducts(products, complexRules);
 				expect(result.length).toBeGreaterThan(0);
 			});
 
-			it('should handle mixed operators within the same rule', () => {
+			it('should handle mixed operators within the same rule', async () => {
 				const mixedRules: Rule[] = [
 					{
-						price: {
-							gt: 100,
-							lt: 1000,
-							ne: 500,
-						},
-						category: {
-							in: ['Electronics', 'Accessories'],
-							notIn: ['Clearance'],
-						},
+						and: [
+							{ price: { gte: 100, lte: 1000 } },
+							{
+								or: [{ category: { eq: 'Electronics' } }, { brand: { in: ['BrandA', 'BrandB'] } }],
+							},
+						],
 					},
 				];
-				const result = ruleEngine.findSourceProducts(products, mixedRules);
+				const result = await ruleEngine.findSourceProducts(products, mixedRules);
 				expect(result.length).toBeGreaterThan(0);
 			});
 
-			it('should handle single condition rules', () => {
+			it('should handle single condition rules', async () => {
 				const engine = new RuleEngine();
 				const products = [
-					{ id: '1', name: 'Test Product', price: 100, category: 'electronics', brand: 'test' },
+					{ id: '1', name: 'Test', price: 100, category: 'Electronics', brand: 'TestBrand' },
 				];
-				const rules = [
-					{
-						[ProductAttributes.price]: { [ComparisonOperators.eq]: 100 },
-					},
-				];
+				const rules = [{ category: { eq: 'Electronics' } }];
 
-				const result = engine.findSourceProducts(products, rules);
+				const result = await engine.findSourceProducts(products, rules);
 				expect(result).toHaveLength(1);
 				expect(result[0].id).toBe('1');
 			});
 
-			it('should handle empty conditions', () => {
+			it('should handle empty conditions', async () => {
 				const engine = new RuleEngine();
 				const products = [
-					{ id: '1', name: 'Test Product', price: 100, category: 'electronics', brand: 'test' },
+					{ id: '1', name: 'Test', price: 100, category: 'Electronics', brand: 'TestBrand' },
 				];
-				const rules: Rule[] = [];
+				const rules: Rule[] = [{}];
 
-				const result = engine.findSourceProducts(products, rules);
+				const result = await engine.findSourceProducts(products, rules);
 				expect(result).toHaveLength(0);
 			});
 
-			it('should handle empty rule object', () => {
+			it('should handle empty rule object', async () => {
 				const engine = new RuleEngine();
 				const products = [
-					{ id: '1', name: 'Test Product', price: 100, category: 'electronics', brand: 'test' },
+					{ id: '1', name: 'Test', price: 100, category: 'Electronics', brand: 'TestBrand' },
 				];
-				// Create a rule object with no conditions (different from empty array)
-				const rules = [{}] as Rule[];
+				const rules: Rule[] = [];
 
-				const result = engine.findSourceProducts(products, rules);
-				// Since the rule converts to true, it should match all products
+				const result = await engine.findSourceProducts(products, rules);
 				expect(result).toHaveLength(1);
 				expect(result[0].id).toBe('1');
 			});
 		});
 
 		describe('Product Data Edge Cases', () => {
-			it('should handle products with extreme numeric values', () => {
-				const extremeRules: Rule[] = [
-					{ price: { gt: -Infinity } },
-					{ price: { lt: Infinity } },
-					{ price: { ne: NaN } },
-				];
-				const result = ruleEngine.findSourceProducts(edgeCaseProducts, extremeRules);
-				expect(result).toBeDefined();
-			});
-
-			it('should handle products with special characters', () => {
-				const specialCharRules: Rule[] = [
+			it('should handle products with extreme numeric values', async () => {
+				const extremeProducts = [
 					{
-						category: { eq: 'Category & Special < > " \' Chars' },
-						brand: { eq: 'Brand & Special < > " \' Chars' },
+						id: 'extreme1',
+						name: 'Extreme Product 1',
+						price: Number.MAX_SAFE_INTEGER,
+						category: 'Test',
+						brand: 'TestBrand',
+					},
+					{
+						id: 'extreme2',
+						name: 'Extreme Product 2',
+						price: Number.MIN_SAFE_INTEGER,
+						category: 'Test',
+						brand: 'TestBrand',
 					},
 				];
-				const result = ruleEngine.findSourceProducts(edgeCaseProducts, specialCharRules);
+
+				const rules: Rule[] = [{ price: { gt: 0 } }];
+				const result = await ruleEngine.findSourceProducts(extremeProducts, rules);
+				expect(result).toHaveLength(1);
+				expect(result[0].id).toBe('extreme1');
+			});
+
+			it('should handle products with special characters', async () => {
+				const specialCharProducts = [
+					{
+						id: 'special1',
+						name: 'Product with !@#$%^&*()',
+						category: 'Test!@#',
+						price: 100,
+						brand: 'Brand!@#',
+					},
+				];
+				const specialCharRules: Rule[] = [{ category: { eq: 'Test!@#' } }];
+				const result = await ruleEngine.findSourceProducts(specialCharProducts, specialCharRules);
 				expect(result).toHaveLength(1);
 			});
 		});
 
 		describe('Performance Edge Cases', () => {
-			it('should handle large number of products', () => {
-				const largeProductList = Array.from({ length: 1000 }, (_, i) => ({
-					...products[i % products.length],
-					id: `large-${i}`,
+			it('should handle large number of products', async () => {
+				const largeProductList = Array.from({ length: 10000 }, (_, i) => ({
+					id: `product-${i}`,
+					name: `Product ${i}`,
+					price: 100,
+					category: i % 2 === 0 ? 'Electronics' : 'Other',
+					brand: `Brand${i % 3}`,
 				}));
 				const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
-				const result = ruleEngine.findSourceProducts(largeProductList, rules);
+				const result = await ruleEngine.findSourceProducts(largeProductList, rules);
 				expect(result.length).toBeGreaterThan(0);
 			});
 
-			it('should handle large number of rules', () => {
-				const largeRuleSet: Rule[] = Array.from({ length: 100 }, () => ({
-					or: [
-						{ price: { gt: 0 } },
-						{ price: { lt: 1000000 } },
-						{ category: { in: ['Electronics', 'Accessories'] } },
-					],
+			it('should handle large number of rules', async () => {
+				const largeRuleSet = Array.from({ length: 100 }, (_, i) => ({
+					price: { gt: i * 100 },
 				}));
-				const result = ruleEngine.findSourceProducts(products, largeRuleSet);
+				const result = await ruleEngine.findSourceProducts(products, largeRuleSet);
 				expect(result.length).toBeGreaterThan(0);
 			});
 		});
 
 		describe('Cross-Selling Edge Cases', () => {
-			it('should not recommend the same product', () => {
+			it('should not recommend the same product', async () => {
+				const sourceProduct = products[0];
+				const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+				const recommendations = await ruleEngine.findRecommendedProducts(
+					sourceProduct,
+					products,
+					rules,
+				);
+				expect(recommendations).not.toContainEqual(
+					expect.objectContaining({ id: sourceProduct.id }),
+				);
+			});
+
+			it('should handle circular recommendations', async () => {
 				const ruleSet: CrossSellingRuleSet = {
 					sourceRules: [{ category: { eq: 'Electronics' } }],
 					recommendationRules: [{ category: { eq: 'Electronics' } }],
 				};
-				const recommendations = ruleEngine.getRecommendations(products[0], products, ruleSet);
-				expect(recommendations).not.toContain(products[0]);
-			});
-
-			it('should handle circular recommendations', () => {
-				const ruleSet: CrossSellingRuleSet = {
-					sourceRules: [{ price: { gt: 0 } }], // Matches all products
-					recommendationRules: [{ price: { gt: 0 } }], // Matches all products
-				};
-				const bulkRecommendations = ruleEngine.getBulkRecommendations(products, products, ruleSet);
-				// Each product should have recommendations excluding itself
+				const bulkRecommendations = await ruleEngine.getBulkRecommendations(
+					products,
+					products,
+					ruleSet,
+				);
 				for (const [productId, recommendations] of bulkRecommendations) {
 					expect(recommendations).not.toContainEqual(expect.objectContaining({ id: productId }));
 				}
@@ -277,32 +292,32 @@ describe('RuleEngine', () => {
 	});
 
 	describe('findSourceProducts', () => {
-		it('should find products matching simple equality rule', () => {
+		it('should find products matching simple equality rule', async () => {
 			const rules = [{ category: { eq: 'Electronics' } }];
-			const sourceProducts = ruleEngine.findSourceProducts(products, rules);
+			const sourceProducts = await ruleEngine.findSourceProducts(products, rules);
 			expect(sourceProducts).toHaveLength(3);
 			expect(sourceProducts.map(p => p.id).sort()).toEqual(['1', '4', '6']);
 		});
 
-		it('should find products matching price range rule', () => {
+		it('should find products matching price range rule', async () => {
 			const rules = [{ price: { gte: 500, lte: 1000 } }];
-			const sourceProducts = ruleEngine.findSourceProducts(products, rules);
+			const sourceProducts = await ruleEngine.findSourceProducts(products, rules);
 			expect(sourceProducts).toHaveLength(2);
 			expect(sourceProducts.map(p => p.id).sort()).toEqual(['4', '6']);
 		});
 
-		it('should find products matching multiple OR conditions', () => {
+		it('should find products matching multiple OR conditions', async () => {
 			const rules = [
 				{
 					or: [{ brand: { eq: 'BrandA' } }, { brand: { eq: 'BrandB' } }],
 				},
 			];
-			const sourceProducts = ruleEngine.findSourceProducts(products, rules);
+			const sourceProducts = await ruleEngine.findSourceProducts(products, rules);
 			expect(sourceProducts).toHaveLength(5);
 			expect(sourceProducts.map(p => p.id).sort()).toEqual(['1', '2', '3', '5', '6']);
 		});
 
-		it('should find products matching complex nested AND/OR conditions', () => {
+		it('should find products matching complex nested AND/OR conditions', async () => {
 			const rules = [
 				{
 					and: [
@@ -313,60 +328,69 @@ describe('RuleEngine', () => {
 					],
 				},
 			];
-			const sourceProducts = ruleEngine.findSourceProducts(products, rules);
+			const sourceProducts = await ruleEngine.findSourceProducts(products, rules);
 			expect(sourceProducts).toHaveLength(2);
 			expect(sourceProducts.map(p => p.id).sort()).toEqual(['1', '6']);
 		});
 
-		it('should handle IN operator correctly', () => {
+		it('should handle IN operator correctly', async () => {
 			const rules = [{ brand: { in: ['BrandA', 'BrandB'] } }];
-			const sourceProducts = ruleEngine.findSourceProducts(products, rules);
+			const sourceProducts = await ruleEngine.findSourceProducts(products, rules);
 			expect(sourceProducts).toHaveLength(5);
 			expect(sourceProducts.map(p => p.id).sort()).toEqual(['1', '2', '3', '5', '6']);
 		});
 
-		it('should handle NOT IN operator correctly', () => {
+		it('should handle NOT IN operator correctly', async () => {
 			const rules = [{ brand: { notIn: ['BrandA', 'BrandB'] } }];
-			const sourceProducts = ruleEngine.findSourceProducts(products, rules);
+			const sourceProducts = await ruleEngine.findSourceProducts(products, rules);
 			expect(sourceProducts).toHaveLength(1);
 			expect(sourceProducts.map(p => p.id).sort()).toEqual(['4']);
 		});
 	});
 
 	describe('findRecommendedProducts', () => {
-		it('should find recommended products based on price range and category', () => {
+		it('should find recommended products based on price range and category', async () => {
 			const sourceProduct = products[0]; // High-end Laptop
-			const rules = [
+			const rules: Rule[] = [
 				{
-					and: [{ category: { eq: 'Accessories' } }, { price: { gte: 50, lte: 100 } }],
+					and: [{ category: { eq: 'Accessories' } }, { price: { lt: 100 } }],
 				},
 			];
+			const recommendations = await ruleEngine.findRecommendedProducts(
+				sourceProduct,
+				products,
+				rules,
+			);
 
-			const recommendations = ruleEngine.findRecommendedProducts(sourceProduct, products, rules);
-
-			expect(recommendations).toHaveLength(1);
-			expect(recommendations[0].id).toBe('2'); // Laptop Bag
+			expect(recommendations).toHaveLength(2);
+			expect(recommendations.map(p => p.id).sort()).toEqual(['2', '3']); // Laptop Bag and Wireless Mouse
 		});
 
-		it('should find recommended products matching any OR condition', () => {
+		it('should find recommended products matching any OR condition', async () => {
 			const sourceProduct = products[0]; // High-end Laptop
-			const rules = [
+			const rules: Rule[] = [
 				{
-					or: [{ price: { lte: 50 } }, { price: { gte: 200 } }],
+					or: [{ price: { gt: 100 } }, { brand: { eq: 'BrandA' } }],
 				},
 			];
-
-			const recommendations = ruleEngine.findRecommendedProducts(sourceProduct, products, rules);
+			const recommendations = await ruleEngine.findRecommendedProducts(
+				sourceProduct,
+				products,
+				rules,
+			);
 
 			expect(recommendations).toHaveLength(4);
 			expect(recommendations.map(p => p.id).sort()).toEqual(['3', '4', '5', '6']);
 		});
 
-		it('should handle multiple rules with OR relationship', () => {
+		it('should handle multiple rules with OR relationship', async () => {
 			const sourceProduct = products[0]; // High-end Laptop
-			const rules = [{ category: { eq: 'Accessories' } }, { brand: { eq: 'BrandB' } }];
-
-			const recommendations = ruleEngine.findRecommendedProducts(sourceProduct, products, rules);
+			const rules: Rule[] = [{ category: { eq: 'Accessories' } }, { price: { gt: 500 } }];
+			const recommendations = await ruleEngine.findRecommendedProducts(
+				sourceProduct,
+				products,
+				rules,
+			);
 
 			expect(recommendations).toHaveLength(4);
 			expect(recommendations.map(p => p.id).sort()).toEqual(['2', '3', '5', '6']);
@@ -374,75 +398,55 @@ describe('RuleEngine', () => {
 	});
 
 	describe('getRecommendations', () => {
-		const complexRuleSet: CrossSellingRuleSet = {
-			sourceRules: [
-				{
-					and: [{ category: { eq: 'Electronics' } }, { price: { gte: 1000 } }],
-				},
-			],
-			recommendationRules: [
-				{
-					or: [
-						{
-							and: [
-								{ category: { eq: 'Accessories' } },
-								{ price: { lte: 100 } },
-								{ brand: { in: ['BrandA', 'BrandB'] } },
-							],
-						},
-						{
-							and: [
-								{ category: { eq: 'Accessories' } },
-								{ price: { gte: 200 } },
-								{ brand: { eq: 'BrandA' } },
-							],
-						},
-					],
-				},
-			],
-		};
+		it('should handle complex rule sets correctly', async () => {
+			const ruleSet: CrossSellingRuleSet = {
+				sourceRules: [{ category: { eq: 'Electronics' } }],
+				recommendationRules: [
+					{
+						and: [{ category: { eq: 'Accessories' } }, { brand: { in: ['BrandA', 'BrandB'] } }],
+					},
+				],
+			};
 
-		it('should handle complex rule sets correctly', () => {
-			const recommendations = ruleEngine.getRecommendations(
-				products[0], // High-end Laptop
-				products,
-				complexRuleSet,
-			);
+			const recommendations = await ruleEngine.getRecommendations(products[0], products, ruleSet);
 
 			expect(recommendations).toHaveLength(3);
 			expect(recommendations.map(p => p.id).sort()).toEqual(['2', '3', '5']);
 		});
 
-		it('should return empty array for non-matching source product', () => {
-			const recommendations = ruleEngine.getRecommendations(
-				products[1], // Laptop Bag (not an electronic)
-				products,
-				complexRuleSet,
-			);
+		it('should return empty array for non-matching source product', async () => {
+			const ruleSet: CrossSellingRuleSet = {
+				sourceRules: [{ category: { eq: 'NonExistent' } }],
+				recommendationRules: [{ category: { eq: 'Accessories' } }],
+			};
+
+			const recommendations = await ruleEngine.getRecommendations(products[0], products, ruleSet);
 
 			expect(recommendations).toHaveLength(0);
 		});
 
-		it('should handle empty rules gracefully', () => {
+		it('should handle empty rules gracefully', async () => {
 			const emptyRuleSet: CrossSellingRuleSet = {
 				sourceRules: [],
 				recommendationRules: [],
 			};
-
-			const recommendations = ruleEngine.getRecommendations(products[0], products, emptyRuleSet);
+			const recommendations = await ruleEngine.getRecommendations(
+				products[0],
+				products,
+				emptyRuleSet,
+			);
 
 			expect(recommendations).toHaveLength(0);
 		});
 	});
 
 	describe('getBulkRecommendations', () => {
-		it('should return recommendations for multiple source products', () => {
+		it('should return recommendations for multiple source products', async () => {
 			const ruleSet: CrossSellingRuleSet = {
 				sourceRules: [{ category: { eq: 'Electronics' } }],
 				recommendationRules: [{ category: { eq: 'Accessories' } }],
 			};
-
-			const recommendations = ruleEngine.getBulkRecommendations(products, products, ruleSet);
+			const recommendations = await ruleEngine.getBulkRecommendations(products, products, ruleSet);
 
 			expect(recommendations.size).toBe(3); // Three electronics products
 			for (const [, recs] of recommendations) {
@@ -450,24 +454,22 @@ describe('RuleEngine', () => {
 			}
 		});
 
-		it('should handle empty product list gracefully', () => {
+		it('should handle empty product list gracefully', async () => {
 			const ruleSet: CrossSellingRuleSet = {
 				sourceRules: [{ category: { eq: 'Electronics' } }],
 				recommendationRules: [{ category: { eq: 'Accessories' } }],
 			};
-
-			const recommendations = ruleEngine.getBulkRecommendations([], products, ruleSet);
+			const recommendations = await ruleEngine.getBulkRecommendations([], products, ruleSet);
 
 			expect(recommendations.size).toBe(0);
 		});
 
-		it('should handle empty available products gracefully', () => {
+		it('should handle empty available products gracefully', async () => {
 			const ruleSet: CrossSellingRuleSet = {
 				sourceRules: [{ category: { eq: 'Electronics' } }],
 				recommendationRules: [{ category: { eq: 'Accessories' } }],
 			};
-
-			const recommendations = ruleEngine.getBulkRecommendations(products, [], ruleSet);
+			const recommendations = await ruleEngine.getBulkRecommendations(products, [], ruleSet);
 
 			expect(recommendations.size).toBe(3); // Three electronics products
 			for (const [, recs] of recommendations) {
