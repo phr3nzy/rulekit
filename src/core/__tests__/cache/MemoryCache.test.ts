@@ -69,6 +69,19 @@ describe('MemoryCache', () => {
 			expect(await cache.get('key1')).toBeNull();
 		});
 
+		it('should store values indefinitely when TTL is disabled', async () => {
+			cache = new MemoryCache({ defaultTTLSeconds: 0 });
+			await cache.set('key1', 'value1');
+
+			vi.advanceTimersByTime(3600000); // 1 hour
+			expect(await cache.get('key1')).toBe('value1');
+
+			// Also test with undefined TTL
+			await cache.set('key2', 'value2', undefined);
+			vi.advanceTimersByTime(3600000); // Another hour
+			expect(await cache.get('key2')).toBe('value2');
+		});
+
 		it('should run cleanup at intervals', async () => {
 			cache = new MemoryCache({ defaultTTLSeconds: 1 });
 			await cache.set('key1', 'value1');
@@ -132,6 +145,37 @@ describe('MemoryCache', () => {
 			const stats = await cache.getStats();
 			expect(stats?.ksize).toBeGreaterThan(0); // key size
 			expect(stats?.vsize).toBeGreaterThan(0); // value size
+		});
+
+		it('should update stats after deletion', async () => {
+			cache = new MemoryCache({ enableStats: true });
+
+			await cache.set('key1', 'value1');
+			await cache.set('key2', 'value2');
+
+			const statsBeforeDelete = await cache.getStats();
+			expect(statsBeforeDelete?.keys).toBe(2);
+
+			await cache.delete('key1');
+			const statsAfterDelete = await cache.getStats();
+			expect(statsAfterDelete?.keys).toBe(1);
+		});
+
+		it('should update stats after cleanup', async () => {
+			vi.useFakeTimers();
+			cache = new MemoryCache({ defaultTTLSeconds: 1, enableStats: true });
+
+			await cache.set('key1', 'value1');
+			await cache.set('key2', 'value2');
+
+			const statsBeforeExpiry = await cache.getStats();
+			expect(statsBeforeExpiry?.keys).toBe(2);
+
+			vi.advanceTimersByTime(1100); // 1.1 seconds to trigger cleanup
+			const statsAfterExpiry = await cache.getStats();
+			expect(statsAfterExpiry?.keys).toBe(0);
+
+			vi.useRealTimers();
 		});
 	});
 });

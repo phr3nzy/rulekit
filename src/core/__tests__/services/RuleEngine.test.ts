@@ -183,6 +183,19 @@ describe('RuleEngine', () => {
 			expect(stats2?.misses).toBe(initialMisses); // No new misses
 		});
 
+		it('should use BaseRuleEvaluator when caching is disabled', async () => {
+			// Create engine without caching
+			const noCacheEngine = new RuleEngine({ enableCaching: false });
+			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+
+			// Execute operations
+			const sourceProducts = await noCacheEngine.findSourceProducts(testProducts, rules);
+
+			// Verify results are correct even without caching
+			expect(sourceProducts).toHaveLength(2);
+			expect(sourceProducts.map(p => p.id).sort()).toEqual(['1', '4']);
+		});
+
 		it('should clear cache when requested', async () => {
 			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
 
