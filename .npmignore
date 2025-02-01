@@ -1,0 +1,27 @@
+# Source
+src/
+tests/
+docs/
+
+# Development configs
+.husky/
+.github/
+.vscode/
+.idea/
+.git/
+.gitignore
+.eslintrc.json
+.prettierrc
+tsconfig.json
+vitest.config.ts
+
+# Development files
+*.log
+*.tsbuildinfo
+coverage/
+node_modules/
+.DS_Store
+.env*
+
+# Build process
+tsup.config.ts 

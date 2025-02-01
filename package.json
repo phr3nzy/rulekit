@@ -1,0 +1,90 @@
+{
+  "name": "@phr3nzy/rulekit",
+  "version": "0.0.1",
+  "description": "A powerful and flexible toolkit for building rule-based product recommendations and dynamic filtering",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "vitest bench",
+    "bench:watch": "vitest bench --watch",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint:fix": "eslint src --ext .ts --fix && prettier --write \"src/**/*.ts\"",
+    "prepare": "husky",
+    "prepublishOnly": "pnpm run build && pnpm test && pnpm bench"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phr3nzy/rulekit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/phr3nzy/rulekit/issues"
+  },
+  "homepage": "https://github.com/phr3nzy/rulekit#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "rule-engine",
+    "rule-kit",
+    "product-recommendations",
+    "cross-selling",
+    "e-commerce",
+    "typescript",
+    "json-logic"
+  ],
+  "author": "phr3nzy <adilosama47@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "json-logic-js": "^2.0.2",
+    "zod": "^3.22.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.19.0",
+    "@types/json-logic-js": "^2.0.3",
+    "@types/node": "^20.8.2",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitest/coverage-v8": "^3.0.4",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.3",
+    "globals": "^15.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.4.2",
+    "tslib": "^2.8.1",
+    "tsup": "^7.2.0",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
