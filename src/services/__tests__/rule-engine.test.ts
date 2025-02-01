@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { RuleEngine, Product } from '../rule-engine';
 import { CrossSellingRuleSet, Rule } from '../../types/rules';
+import { ProductAttributes, ComparisonOperators } from '../../index';
 
 describe('RuleEngine', () => {
 	const ruleEngine = new RuleEngine();
@@ -160,6 +161,47 @@ describe('RuleEngine', () => {
 				];
 				const result = ruleEngine.findSourceProducts(products, mixedRules);
 				expect(result.length).toBeGreaterThan(0);
+			});
+
+			it('should handle single condition rules', () => {
+				const engine = new RuleEngine();
+				const products = [
+					{ id: '1', name: 'Test Product', price: 100, category: 'electronics', brand: 'test' },
+				];
+				const rules = [
+					{
+						[ProductAttributes.price]: { [ComparisonOperators.eq]: 100 },
+					},
+				];
+
+				const result = engine.findSourceProducts(products, rules);
+				expect(result).toHaveLength(1);
+				expect(result[0].id).toBe('1');
+			});
+
+			it('should handle empty conditions', () => {
+				const engine = new RuleEngine();
+				const products = [
+					{ id: '1', name: 'Test Product', price: 100, category: 'electronics', brand: 'test' },
+				];
+				const rules: Rule[] = [];
+
+				const result = engine.findSourceProducts(products, rules);
+				expect(result).toHaveLength(0);
+			});
+
+			it('should handle empty rule object', () => {
+				const engine = new RuleEngine();
+				const products = [
+					{ id: '1', name: 'Test Product', price: 100, category: 'electronics', brand: 'test' },
+				];
+				// Create a rule object with no conditions (different from empty array)
+				const rules = [{}] as Rule[];
+
+				const result = engine.findSourceProducts(products, rules);
+				// Since the rule converts to true, it should match all products
+				expect(result).toHaveLength(1);
+				expect(result[0].id).toBe('1');
 			});
 		});
 
