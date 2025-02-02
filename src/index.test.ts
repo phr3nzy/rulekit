@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import * as pkg from '../index';
+import * as pkg from './index';
 
 describe('Package exports', () => {
 	it('should export all required types and classes', () => {

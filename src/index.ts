@@ -1,5 +1,5 @@
 // Core types
-export type { Product } from './core/models/Product';
+export type { Product } from './core/models/types';
 export type {
 	Rule,
 	CrossSellingConfig,
@@ -8,8 +8,8 @@ export type {
 	RuleValue,
 	BaseFilter,
 	ProductAttribute,
-} from './core/models/Rule';
-export { ComparisonOperators, ProductAttributes } from './core/models/Rule';
+} from './core/models/types';
+export { ComparisonOperators, ProductAttributes } from './core/models/types';
 
 // Validation schemas
 export {
@@ -17,14 +17,14 @@ export {
 	ruleValueSchema,
 	crossSellingRuleSetSchema,
 	crossSellingConfigSchema,
-} from './core/models/Rule';
+} from './core/models/validation';
 
 // Interfaces
-export type { ICache, CacheConfig } from './core/interfaces/ICache';
-export type { IRuleEvaluator } from './core/interfaces/IRuleEvaluator';
+export type { CacheConfig } from './core/cache/types';
+export type { RuleEvaluator } from './core/evaluators/types';
 
 // Implementations
-export { MemoryCache } from './core/cache/MemoryCache';
-export { BaseRuleEvaluator } from './core/evaluators/BaseRuleEvaluator';
-export { CachedRuleEvaluator } from './core/evaluators/CachedRuleEvaluator';
-export { RuleEngine } from './core/services/RuleEngine';
+export { MemoryCache } from './core/cache/memory-cache';
+export { BaseRuleEvaluator } from './core/evaluators/base-rule-evaluator';
+export { CachedRuleEvaluator } from './core/evaluators/cached-rule-evaluator';
+export { RuleEngine } from './core/services/rule-engine';

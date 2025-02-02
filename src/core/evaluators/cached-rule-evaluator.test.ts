@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CachedRuleEvaluator } from '../../evaluators/CachedRuleEvaluator';
-import { MemoryCache } from '../../cache/MemoryCache';
-import type { Product } from '../../models/Product';
-import type { Rule } from '../../models/Rule';
+import { CachedRuleEvaluator } from './cached-rule-evaluator';
+import { MemoryCache } from '../cache/memory-cache';
+import type { Product, Rule } from '../models/types';
 
 describe('CachedRuleEvaluator', () => {
 	let cache: MemoryCache;
@@ -15,6 +14,11 @@ describe('CachedRuleEvaluator', () => {
 			price: 1200,
 			category: 'Electronics',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'blue',
+				weight: 50,
+				__validated: true,
+			},
 		},
 		{
 			id: '2',
@@ -22,6 +26,11 @@ describe('CachedRuleEvaluator', () => {
 			price: 50,
 			category: 'Accessories',
 			brand: 'BagBrand',
+			attributes: {
+				color: 'red',
+				weight: 10,
+				__validated: true,
+			},
 		},
 	];
 

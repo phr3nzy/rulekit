@@ -41,7 +41,7 @@ export interface CacheConfig {
 /**
  * Interface for cache implementations
  */
-export interface ICache {
+export interface Cache {
 	/**
 	 * Retrieves a value from cache by key
 	 * @param key The key to retrieve

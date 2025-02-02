@@ -4,7 +4,7 @@ import {
 	ruleValueSchema,
 	crossSellingRuleSetSchema,
 	crossSellingConfigSchema,
-} from '../../models/Rule';
+} from './validation';
 
 describe('Rule Schemas', () => {
 	describe('ruleValueSchema', () => {

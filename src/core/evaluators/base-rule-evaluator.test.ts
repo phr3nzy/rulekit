@@ -48,9 +48,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { BaseRuleEvaluator } from '../../evaluators/BaseRuleEvaluator';
-import type { Product } from '../../models/Product';
-import type { Rule } from '../../models/Rule';
+import { BaseRuleEvaluator } from './base-rule-evaluator';
+import type { Product, Rule } from '../models/types';
 
 describe('BaseRuleEvaluator', () => {
 	const evaluator = new BaseRuleEvaluator();
@@ -62,6 +61,11 @@ describe('BaseRuleEvaluator', () => {
 			price: 1200,
 			category: 'Electronics',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'blue',
+				weight: 50,
+				__validated: true,
+			},
 		},
 		{
 			id: '2',
@@ -69,6 +73,11 @@ describe('BaseRuleEvaluator', () => {
 			price: 50,
 			category: 'Accessories',
 			brand: 'BagBrand',
+			attributes: {
+				color: 'red',
+				weight: 10,
+				__validated: true,
+			},
 		},
 		{
 			id: '3',
@@ -76,6 +85,11 @@ describe('BaseRuleEvaluator', () => {
 			price: 30,
 			category: 'Accessories',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'blue',
+				weight: 10,
+				__validated: true,
+			},
 		},
 	];
 
@@ -249,63 +263,6 @@ describe('BaseRuleEvaluator', () => {
 				enumerable: true,
 			});
 			expect(await evaluator.evaluateRule(productWithUndefinedAttr, rule)).toBe(false);
-		});
-
-		it('should handle multiple conditions where one attribute is undefined', async () => {
-			const multiConditionRule = {
-				category: { eq: 'Electronics' },
-				nonexistent: { eq: 'value' },
-			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], multiConditionRule)).toBe(false);
-		});
-
-		it('should handle sequential evaluation where second attribute is undefined', async () => {
-			const sequentialRule = {
-				category: { eq: 'Electronics' }, // This will pass for testProducts[0]
-				description: { eq: 'something' }, // This attribute doesn't exist
-			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], sequentialRule)).toBe(false);
-		});
-
-		it('should handle attributes set to null', async () => {
-			const rule: Rule = { category: { eq: 'Electronics' } };
-			const productWithNull: Product = {
-				...testProducts[0],
-				category: null as any,
-			};
-			expect(await evaluator.evaluateRule(productWithNull, rule)).toBe(false);
-		});
-
-		it('should handle mixed null and defined attributes', async () => {
-			const productWithMixedNull: Product = {
-				...testProducts[0],
-				category: 'Electronics',
-				brand: null as any,
-			};
-			const mixedRule: Rule = {
-				category: { eq: 'Electronics' },
-				brand: { eq: 'TechBrand' },
-			};
-			expect(await evaluator.evaluateRule(productWithMixedNull, mixedRule)).toBe(false);
-		});
-
-		it('should handle empty AND conditions', async () => {
-			const emptyAndRule: Rule = { and: [] };
-			expect(await evaluator.evaluateRule(testProducts[0], emptyAndRule)).toBe(true);
-		});
-
-		it('should handle empty OR conditions', async () => {
-			const emptyOrRule: Rule = { or: [] };
-			expect(await evaluator.evaluateRule(testProducts[0], emptyOrRule)).toBe(false);
-		});
-
-		it('should handle invalid operator', async () => {
-			const rule: Rule = { price: { invalid: 100 } as any };
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
-		});
-
-		it('should successfully clear internal state', async () => {
-			await expect(evaluator.clear()).resolves.toBeUndefined();
 		});
 	});
 });

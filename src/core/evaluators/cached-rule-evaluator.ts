@@ -1,17 +1,16 @@
-import type { Product } from '../models/Product';
-import type { Rule } from '../models/Rule';
-import type { ICache } from '../interfaces/ICache';
-import { BaseRuleEvaluator } from './BaseRuleEvaluator';
+import type { Product, Rule } from '../models/types';
+import type { Cache } from '../cache/types';
+import { BaseRuleEvaluator } from './base-rule-evaluator';
 
 /**
  * Cached implementation of RuleEvaluator
  */
 export class CachedRuleEvaluator extends BaseRuleEvaluator {
-	private readonly cache: ICache;
+	private readonly cache: Cache;
 	private readonly keyPrefix: string;
 	private readonly ttlSeconds?: number;
 
-	constructor(cache: ICache, options?: { keyPrefix?: string; ttlSeconds?: number }) {
+	constructor(cache: Cache, options?: { keyPrefix?: string; ttlSeconds?: number }) {
 		super();
 		this.cache = cache;
 		this.keyPrefix = options?.keyPrefix ?? 'rule_eval:';

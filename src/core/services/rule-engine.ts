@@ -1,23 +1,22 @@
-import type { Product } from '../models/Product';
-import type { Rule, CrossSellingConfig } from '../models/Rule';
-import type { ICache } from '../interfaces/ICache';
-import type { IRuleEvaluator } from '../interfaces/IRuleEvaluator';
-import { CachedRuleEvaluator } from '../evaluators/CachedRuleEvaluator';
-import { BaseRuleEvaluator } from '../evaluators/BaseRuleEvaluator';
-import { MemoryCache } from '../cache/MemoryCache';
+import type { Product, Rule, CrossSellingConfig } from '../models/types';
+import { CachedRuleEvaluator } from '../evaluators/cached-rule-evaluator';
+import { BaseRuleEvaluator } from '../evaluators/base-rule-evaluator';
+import { MemoryCache } from '../cache/memory-cache';
+import { RuleEvaluator } from '../evaluators/types';
+import { Cache } from '../cache/types';
 
 interface RuleEngineConfig {
 	/**
 	 * Cache implementation to use
 	 * @default MemoryCache
 	 */
-	cache?: ICache;
+	cache?: Cache;
 
 	/**
 	 * Rule evaluator implementation to use
 	 * @default CachedRuleEvaluator
 	 */
-	evaluator?: IRuleEvaluator;
+	evaluator?: RuleEvaluator;
 
 	/**
 	 * Whether to enable caching
@@ -42,13 +41,13 @@ interface RuleEngineConfig {
  * Main RuleEngine service for product recommendations
  */
 export class RuleEngine {
-	private readonly evaluator: IRuleEvaluator;
+	private readonly evaluator: RuleEvaluator;
 	private readonly config: Required<RuleEngineConfig>;
 
 	constructor(config?: Partial<RuleEngineConfig>) {
 		this.config = {
 			cache: new MemoryCache(),
-			evaluator: undefined as unknown as IRuleEvaluator,
+			evaluator: undefined as unknown as RuleEvaluator,
 			enableCaching: true,
 			cacheTTLSeconds: 3600,
 			maxBatchSize: 1000,

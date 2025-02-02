@@ -1,10 +1,9 @@
-import type { Product } from '../models/Product';
-import type { Rule } from '../models/Rule';
+import type { Product, Rule } from '../models/types';
 
 /**
  * Interface for rule evaluation implementations
  */
-export interface IRuleEvaluator {
+export interface RuleEvaluator {
 	/**
 	 * Evaluates a single product against a rule
 	 * @param product The product to evaluate

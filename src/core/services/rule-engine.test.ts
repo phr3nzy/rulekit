@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { RuleEngine } from '../../services/RuleEngine';
-import { MemoryCache } from '../../cache/MemoryCache';
-import type { Product } from '../../models/Product';
-import type { Rule, CrossSellingConfig } from '../../models/Rule';
+import { RuleEngine } from './rule-engine';
+import { MemoryCache } from '../cache/memory-cache';
+import type { Product, Rule, CrossSellingConfig } from '../models/types';
 
 describe('RuleEngine', () => {
 	let engine: RuleEngine;
@@ -15,6 +14,11 @@ describe('RuleEngine', () => {
 			price: 1200,
 			category: 'Electronics',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'blue',
+				weight: 50,
+				__validated: true,
+			},
 		},
 		{
 			id: '2',
@@ -22,6 +26,11 @@ describe('RuleEngine', () => {
 			price: 50,
 			category: 'Accessories',
 			brand: 'BagBrand',
+			attributes: {
+				color: 'red',
+				weight: 10,
+				__validated: true,
+			},
 		},
 		{
 			id: '3',
@@ -29,6 +38,11 @@ describe('RuleEngine', () => {
 			price: 30,
 			category: 'Accessories',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'red',
+				weight: 10,
+				__validated: true,
+			},
 		},
 		{
 			id: '4',
@@ -36,6 +50,11 @@ describe('RuleEngine', () => {
 			price: 2000,
 			category: 'Electronics',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'blue',
+				weight: 50,
+				__validated: true,
+			},
 		},
 		{
 			id: '5',
@@ -43,6 +62,11 @@ describe('RuleEngine', () => {
 			price: 80,
 			category: 'Accessories',
 			brand: 'TechBrand',
+			attributes: {
+				color: 'blue',
+				weight: 50,
+				__validated: true,
+			},
 		},
 	];
 

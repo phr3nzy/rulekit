@@ -1,4 +1,4 @@
-import type { ICache, CacheConfig } from '../interfaces/ICache';
+import type { Cache, CacheConfig } from './types';
 
 interface CacheEntry<T> {
 	value: T;
@@ -14,9 +14,9 @@ interface CacheStats {
 }
 
 /**
- * Memory-based implementation of ICache
+ * Memory-based implementation of Cache interface
  */
-export class MemoryCache implements ICache {
+export class MemoryCache implements Cache {
 	private cache: Map<string, CacheEntry<unknown>>;
 	private stats: CacheStats;
 	private readonly config: Required<CacheConfig>;

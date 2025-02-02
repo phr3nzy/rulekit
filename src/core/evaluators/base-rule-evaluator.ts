@@ -1,12 +1,12 @@
-import type { Product } from '../models/Product';
-import type { Rule, ComparisonOperator, RuleValue } from '../models/Rule';
-import type { IRuleEvaluator } from '../interfaces/IRuleEvaluator';
-import { ComparisonOperators } from '../models/Rule';
+import type { Product } from '../models/types';
+import type { Rule, ComparisonOperator, RuleValue } from '../models/types';
+import type { RuleEvaluator } from './types';
+import { ComparisonOperators } from '../models/types';
 
 /**
- * Base implementation of IRuleEvaluator
+ * Base implementation of RuleEvaluator interface
  */
-export class BaseRuleEvaluator implements IRuleEvaluator {
+export class BaseRuleEvaluator implements RuleEvaluator {
 	/**
 	 * Evaluates a single product against a rule
 	 */
