@@ -7,16 +7,15 @@ export type {
 	ComparisonOperator,
 	RuleValue,
 	BaseFilter,
-	ProductAttribute,
 } from './core/models/types';
-export { ComparisonOperators, ProductAttributes } from './core/models/types';
+export { ComparisonOperators } from './core/models/types';
 
-// Validation schemas
+// Validation
 export {
-	ruleSchema,
-	ruleValueSchema,
-	crossSellingRuleSetSchema,
-	crossSellingConfigSchema,
+	validateRule,
+	validateCrossSellingRuleSet,
+	validateCrossSellingConfig,
+	RuleValidationError,
 } from './core/models/validation';
 
 // Interfaces

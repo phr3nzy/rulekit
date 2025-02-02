@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { Product } from './types';
 import { ProductAttributeRegistry } from '../attributes/registry';
 import { AttributeType } from '../attributes/types';
+import type { Product } from './types';
 
 describe('Product with Dynamic Attributes', () => {
 	let registry: ProductAttributeRegistry;
@@ -13,25 +13,33 @@ describe('Product with Dynamic Attributes', () => {
 	it('should create a product with valid dynamic attributes', async () => {
 		// Register some attributes
 		registry.registerAttribute({
-			name: 'color',
-			type: AttributeType.STRING,
-			description: 'Product color',
-			validation: {
-				type: AttributeType.STRING,
-				required: true,
-				pattern: '^[a-zA-Z]+$',
-			},
-		});
-
-		registry.registerAttribute({
-			name: 'weight',
+			name: 'price',
 			type: AttributeType.NUMBER,
-			description: 'Product weight in kg',
+			description: 'Product price',
 			validation: {
 				type: AttributeType.NUMBER,
 				required: true,
 				min: 0,
-				max: 100,
+			},
+		});
+
+		registry.registerAttribute({
+			name: 'category',
+			type: AttributeType.STRING,
+			description: 'Product category',
+			validation: {
+				type: AttributeType.STRING,
+				required: true,
+			},
+		});
+
+		registry.registerAttribute({
+			name: 'brand',
+			type: AttributeType.STRING,
+			description: 'Product brand',
+			validation: {
+				type: AttributeType.STRING,
+				required: true,
 			},
 		});
 
@@ -39,25 +47,25 @@ describe('Product with Dynamic Attributes', () => {
 		const validProduct: Product = {
 			id: '1',
 			name: 'Test Product',
-			price: 99.99,
-			category: 'Electronics',
-			brand: 'TestBrand',
 			attributes: {
-				color: 'blue',
-				weight: 50,
+				price: 99.99,
+				category: 'Electronics',
+				brand: 'TestBrand',
 				__validated: true,
 			},
 		};
 
 		// Validate the attributes
 		await registry.validateAttributes({
-			color: validProduct.attributes.color,
-			weight: validProduct.attributes.weight,
+			price: validProduct.attributes.price,
+			category: validProduct.attributes.category,
+			brand: validProduct.attributes.brand,
 		});
 
 		// If we get here, validation passed
-		expect(validProduct.attributes.color).toBe('blue');
-		expect(validProduct.attributes.weight).toBe(50);
+		expect(validProduct.attributes.price).toBe(99.99);
+		expect(validProduct.attributes.category).toBe('Electronics');
+		expect(validProduct.attributes.brand).toBe('TestBrand');
 	});
 
 	it('should handle complex attribute types', async () => {
@@ -90,9 +98,6 @@ describe('Product with Dynamic Attributes', () => {
 		const product: Product = {
 			id: '2',
 			name: 'Complex Product',
-			price: 149.99,
-			category: 'Clothing',
-			brand: 'ComplexBrand',
 			attributes: {
 				specifications: ['Cotton', 'Machine Washable', 'Imported'],
 				size: 'L',
@@ -124,9 +129,6 @@ describe('Product with Dynamic Attributes', () => {
 		const invalidProduct: Product = {
 			id: '3',
 			name: 'Invalid Product',
-			price: 29.99,
-			category: 'Books',
-			brand: 'InvalidBrand',
 			attributes: {
 				inStock: 'yes', // Invalid type: should be boolean
 				__validated: false,
@@ -156,9 +158,6 @@ describe('Product with Dynamic Attributes', () => {
 		const productWithoutDate: Product = {
 			id: '4',
 			name: 'Optional Product',
-			price: 199.99,
-			category: 'Electronics',
-			brand: 'OptionalBrand',
 			attributes: {
 				__validated: true,
 			},
@@ -171,9 +170,6 @@ describe('Product with Dynamic Attributes', () => {
 		const productWithDate: Product = {
 			id: '5',
 			name: 'Optional Product with Date',
-			price: 199.99,
-			category: 'Electronics',
-			brand: 'OptionalBrand',
 			attributes: {
 				releaseDate: new Date('2024-01-01'),
 				__validated: true,
@@ -226,9 +222,6 @@ describe('Product with Dynamic Attributes', () => {
 		const productWithWarranty: Product = {
 			id: '6',
 			name: 'Warranty Product',
-			price: 299.99,
-			category: 'Electronics',
-			brand: 'WarrantyBrand',
 			attributes: {
 				hasWarranty: true,
 				warrantyPeriod: 24,
@@ -246,9 +239,6 @@ describe('Product with Dynamic Attributes', () => {
 		const productWithoutWarranty: Product = {
 			id: '7',
 			name: 'No Warranty Product',
-			price: 299.99,
-			category: 'Electronics',
-			brand: 'WarrantyBrand',
 			attributes: {
 				hasWarranty: false,
 				__validated: true,
@@ -264,9 +254,6 @@ describe('Product with Dynamic Attributes', () => {
 		const invalidProduct: Product = {
 			id: '8',
 			name: 'Invalid Warranty Product',
-			price: 299.99,
-			category: 'Electronics',
-			brand: 'WarrantyBrand',
 			attributes: {
 				hasWarranty: true,
 				__validated: false,

@@ -1,60 +1,152 @@
-import { z } from 'zod';
-import { ProductAttributes } from './types';
-import type { Rule } from './types';
+import type {
+	Rule,
+	RuleValue,
+	ComparisonOperator,
+	CrossSellingRuleSet,
+	CrossSellingConfig,
+} from './types';
+import { ComparisonOperators } from './types';
 
-// Validation schemas
-export const ruleValueSchema = z.union([
-	z.string(),
-	z.number(),
-	z.boolean(),
-	z.array(z.union([z.string(), z.number()])),
-]);
+export class RuleValidationError extends Error {
+	constructor(message: string) {
+		super(`Rule validation failed: ${message}`);
+		this.name = 'RuleValidationError';
+	}
+}
 
-const operatorSchema = z
-	.object({
-		eq: ruleValueSchema.optional(),
-		ne: ruleValueSchema.optional(),
-		gt: z.number().optional(),
-		gte: z.number().optional(),
-		lt: z.number().optional(),
-		lte: z.number().optional(),
-		in: z.array(z.union([z.string(), z.number()])).optional(),
-		notIn: z.array(z.union([z.string(), z.number()])).optional(),
-	})
-	.strict();
+function isValidRuleValue(value: unknown): value is RuleValue {
+	if (value === undefined || value === null) return false;
 
-const attributeSchema = z
-	.object({
-		[ProductAttributes.price]: operatorSchema.optional(),
-		[ProductAttributes.category]: operatorSchema.optional(),
-		[ProductAttributes.brand]: operatorSchema.optional(),
-	})
-	.strict();
+	if (Array.isArray(value)) {
+		return value.every(item => typeof item === 'string' || typeof item === 'number');
+	}
 
-export const ruleSchema: z.ZodType<Rule> = z.lazy(() =>
-	attributeSchema
-		.extend({
-			and: z.array(z.lazy(() => ruleSchema)).optional(),
-			or: z.array(z.lazy(() => ruleSchema)).optional(),
-		})
-		.strict(),
-);
+	return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+}
 
-export const crossSellingRuleSetSchema = z
-	.object({
-		sourceRules: z.array(ruleSchema).min(1),
-		recommendationRules: z.array(ruleSchema).min(1),
-	})
-	.strict();
+function validateOperator(operator: ComparisonOperator, value: unknown): void {
+	if (!isValidRuleValue(value)) {
+		throw new RuleValidationError(`Invalid value type for operator "${operator}"`);
+	}
 
-export const crossSellingConfigSchema = z
-	.object({
-		id: z.string(),
-		name: z.string(),
-		description: z.string().optional(),
-		ruleSet: crossSellingRuleSetSchema,
-		isActive: z.boolean(),
-		createdAt: z.date(),
-		updatedAt: z.date(),
-	})
-	.strict();
+	// Validate numeric operators
+	if (['gt', 'gte', 'lt', 'lte'].includes(operator)) {
+		if (typeof value !== 'number') {
+			throw new RuleValidationError(`Operator "${operator}" requires a numeric value`);
+		}
+	}
+
+	// Validate array operators
+	if (['in', 'notIn'].includes(operator)) {
+		if (!Array.isArray(value)) {
+			throw new RuleValidationError(`Operator "${operator}" requires an array value`);
+		}
+	}
+}
+
+function validateFilter(filter: Record<string, unknown>): void {
+	const operators = Object.keys(filter) as ComparisonOperator[];
+
+	if (operators.length === 0) {
+		throw new RuleValidationError('Filter must contain at least one operator');
+	}
+
+	for (const operator of operators) {
+		if (!Object.values(ComparisonOperators).includes(operator)) {
+			throw new RuleValidationError(`Invalid operator "${operator}"`);
+		}
+
+		validateOperator(operator, filter[operator]);
+	}
+}
+
+export function validateRule(rule: unknown): asserts rule is Rule {
+	if (typeof rule !== 'object' || rule === null) {
+		throw new RuleValidationError('Rule must be an object');
+	}
+
+	const ruleObj = rule as Record<string, unknown>;
+
+	// Validate AND conditions
+	if ('and' in ruleObj) {
+		if (!Array.isArray(ruleObj.and)) {
+			throw new RuleValidationError('AND conditions must be an array');
+		}
+		ruleObj.and.forEach(subRule => validateRule(subRule));
+	}
+
+	// Validate OR conditions
+	if ('or' in ruleObj) {
+		if (!Array.isArray(ruleObj.or)) {
+			throw new RuleValidationError('OR conditions must be an array');
+		}
+		ruleObj.or.forEach(subRule => validateRule(subRule));
+	}
+
+	// Validate filters
+	const filters = Object.entries(ruleObj).filter(([key]) => !['and', 'or'].includes(key));
+	filters.forEach(([_key, filter]) => {
+		if (typeof filter !== 'object' || filter === null) {
+			throw new RuleValidationError('Filter must be an object');
+		}
+		validateFilter(filter as Record<string, unknown>);
+	});
+}
+
+export function validateCrossSellingRuleSet(
+	ruleSet: unknown,
+): asserts ruleSet is CrossSellingRuleSet {
+	if (typeof ruleSet !== 'object' || ruleSet === null) {
+		throw new RuleValidationError('Rule set must be an object');
+	}
+
+	const { sourceRules, recommendationRules } = ruleSet as Record<string, unknown>;
+
+	if (!Array.isArray(sourceRules) || sourceRules.length === 0) {
+		throw new RuleValidationError('Source rules must be a non-empty array');
+	}
+
+	if (!Array.isArray(recommendationRules) || recommendationRules.length === 0) {
+		throw new RuleValidationError('Recommendation rules must be a non-empty array');
+	}
+
+	sourceRules.forEach(rule => validateRule(rule));
+	recommendationRules.forEach(rule => validateRule(rule));
+}
+
+export function validateCrossSellingConfig(config: unknown): asserts config is CrossSellingConfig {
+	if (typeof config !== 'object' || config === null) {
+		throw new RuleValidationError('Config must be an object');
+	}
+
+	const { id, name, description, ruleSet, isActive, createdAt, updatedAt } = config as Record<
+		string,
+		unknown
+	>;
+
+	if (typeof id !== 'string' || id.length === 0) {
+		throw new RuleValidationError('Config must have a non-empty string id');
+	}
+
+	if (typeof name !== 'string' || name.length === 0) {
+		throw new RuleValidationError('Config must have a non-empty string name');
+	}
+
+	if (description !== undefined && (typeof description !== 'string' || description.length === 0)) {
+		throw new RuleValidationError('Description must be a non-empty string if provided');
+	}
+
+	validateCrossSellingRuleSet(ruleSet);
+
+	if (typeof isActive !== 'boolean') {
+		throw new RuleValidationError('isActive must be a boolean');
+	}
+
+	if (!(createdAt instanceof Date)) {
+		throw new RuleValidationError('createdAt must be a Date');
+	}
+
+	if (!(updatedAt instanceof Date)) {
+		throw new RuleValidationError('updatedAt must be a Date');
+	}
+}

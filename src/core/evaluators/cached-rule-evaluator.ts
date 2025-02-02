@@ -21,7 +21,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 	 * Evaluates a single product against a rule with caching
 	 */
 	async evaluateRule(product: Product, rule: Rule): Promise<boolean> {
-		const cacheKey = this.getCacheKey(product, rule);
+		const cacheKey = this.generateCacheKey(product, rule);
 		const cachedResult = await this.cache.get<boolean>(cacheKey);
 
 		if (cachedResult !== null) {
@@ -45,7 +45,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 		// Try to get cached results first
 		await Promise.all(
 			products.map(async (product, index) => {
-				const cacheKey = this.getCacheKey(product, rule);
+				const cacheKey = this.generateCacheKey(product, rule);
 				const cachedResult = await this.cache.get<boolean>(cacheKey);
 
 				if (cachedResult !== null) {
@@ -65,7 +65,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 			await Promise.all(
 				uncachedProducts.map(async (product, index) => {
 					const result = uncachedResults[index];
-					const cacheKey = this.getCacheKey(product, rule);
+					const cacheKey = this.generateCacheKey(product, rule);
 					await this.cache.set(cacheKey, result, this.ttlSeconds);
 					results[uncachedIndices[index]] = result;
 				}),
@@ -93,8 +93,28 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 	/**
 	 * Generates a cache key for a product-rule pair
 	 */
-	private getCacheKey(product: Product, rule: Rule): string {
-		// Use a combination of product ID and stringified rule as the cache key
-		return `${this.keyPrefix}${product.id}:${JSON.stringify(rule)}`;
+	private generateCacheKey(product: Product, rule: Rule): string {
+		// Sort rule keys for consistent cache keys
+		const sortedRule = this.sortRuleKeys(rule);
+		return `${this.keyPrefix}${product.id}:${JSON.stringify(sortedRule)}`;
+	}
+
+	/**
+	 * Sort rule keys for consistent cache keys
+	 */
+	private sortRuleKeys(rule: Rule): Rule {
+		if ('and' in rule && rule.and) {
+			return { ...rule, and: rule.and.map(r => this.sortRuleKeys(r)).sort() };
+		}
+
+		if ('or' in rule && rule.or) {
+			return { ...rule, or: rule.or.map(r => this.sortRuleKeys(r)).sort() };
+		}
+
+		const entries = Object.entries(rule)
+			.filter(([key]) => key !== 'and' && key !== 'or')
+			.sort(([a], [b]) => a.localeCompare(b));
+
+		return Object.fromEntries(entries);
 	}
 }

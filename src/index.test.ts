@@ -5,10 +5,10 @@ describe('Package exports', () => {
 	it('should export all required types and classes', () => {
 		expect(pkg).toHaveProperty('RuleEngine');
 		expect(pkg).toHaveProperty('ComparisonOperators');
-		expect(pkg).toHaveProperty('ProductAttributes');
-		expect(pkg).toHaveProperty('ruleSchema');
-		expect(pkg).toHaveProperty('crossSellingRuleSetSchema');
-		expect(pkg).toHaveProperty('crossSellingConfigSchema');
+		expect(pkg).toHaveProperty('validateRule');
+		expect(pkg).toHaveProperty('validateCrossSellingRuleSet');
+		expect(pkg).toHaveProperty('validateCrossSellingConfig');
+		expect(pkg).toHaveProperty('RuleValidationError');
 	});
 
 	it('should export ComparisonOperators with correct values', () => {
@@ -24,11 +24,17 @@ describe('Package exports', () => {
 		});
 	});
 
-	it('should export ProductAttributes with correct values', () => {
-		expect(pkg.ProductAttributes).toEqual({
-			price: 'price',
-			category: 'category',
-			brand: 'brand',
-		});
+	it('should export Product type with dynamic attributes support', () => {
+		// Type checking test - this will fail compilation if Product type doesn't support dynamic attributes
+		const validProduct: pkg.Product = {
+			id: '1',
+			name: 'Test Product',
+			attributes: {
+				customField: 'value',
+				numericField: 123,
+				__validated: true,
+			},
+		};
+		expect(validProduct.attributes.__validated).toBe(true);
 	});
 });

@@ -102,8 +102,15 @@ export class RuleEngine {
 			const end = Math.min(start + this.config.maxBatchSize, products.length);
 			const batch = products.slice(start, end);
 
+			// Evaluate each product against all rules
 			const batchResults = await Promise.all(
-				batch.map(product => this.evaluator.evaluateRules(product, rules)),
+				batch.map(async product => {
+					// Each rule in the array must match (AND condition)
+					const ruleResults = await Promise.all(
+						rules.map(rule => this.evaluator.evaluateRule(product, rule)),
+					);
+					return ruleResults.every(Boolean);
+				}),
 			);
 
 			results.push(...batchResults);

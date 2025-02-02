@@ -1,5 +1,4 @@
-import type { Product } from '../models/types';
-import type { Rule, ComparisonOperator, RuleValue } from '../models/types';
+import type { Product, Rule, RuleValue, ComparisonOperator } from '../models/types';
 import type { RuleEvaluator } from './types';
 import { ComparisonOperators } from '../models/types';
 
@@ -12,21 +11,44 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 	 */
 	async evaluateRule(product: Product, rule: Rule): Promise<boolean> {
 		// Handle AND conditions
-		if (rule.and?.length) {
-			return (await Promise.all(rule.and.map(r => this.evaluateRule(product, r)))).every(Boolean);
+		if (rule.and) {
+			return (
+				await Promise.all(rule.and.map(subRule => this.evaluateRule(product, subRule)))
+			).every(Boolean);
 		}
 
 		// Handle OR conditions
-		if (rule.or?.length) {
-			return (await Promise.all(rule.or.map(r => this.evaluateRule(product, r)))).some(Boolean);
+		if (rule.or) {
+			return (await Promise.all(rule.or.map(subRule => this.evaluateRule(product, subRule)))).some(
+				Boolean,
+			);
 		}
 
-		// Handle empty AND/OR conditions
-		if (rule.and !== undefined && !rule.and.length) return true;
-		if (rule.or !== undefined && !rule.or.length) return false;
+		// Handle attributes
+		if (rule.attributes) {
+			return Object.entries(rule.attributes).every(([attrKey, attrValue]) => {
+				const productValue = product.attributes[attrKey];
+				return this.evaluateFilter(
+					productValue,
+					attrValue as Record<ComparisonOperator, RuleValue>,
+				);
+			});
+		}
 
-		// Handle leaf node (actual comparison)
-		return this.evaluateLeafRule(product, rule);
+		// Handle direct attribute rules (legacy format)
+		const attributeEntries = Object.entries(rule).filter(([key]) => key !== 'and' && key !== 'or');
+		if (attributeEntries.length > 0) {
+			return attributeEntries.every(([attrKey, attrValue]) => {
+				const productValue = product.attributes[attrKey];
+				return this.evaluateFilter(
+					productValue,
+					attrValue as Record<ComparisonOperator, RuleValue>,
+				);
+			});
+		}
+
+		// Return false for unhandled cases
+		return false;
 	}
 
 	/**
@@ -51,66 +73,56 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 	}
 
 	/**
-	 * Evaluates a leaf rule node (actual comparison)
+	 * Evaluates a filter against a value
 	 */
-	protected evaluateLeafRule(product: Product, rule: Rule): boolean {
-		for (const [attribute, conditions] of Object.entries(rule)) {
-			if (attribute === 'and' || attribute === 'or') continue;
-
-			const productValue = product[attribute as keyof Product];
-			if (productValue === undefined) return false;
-
-			for (const [operator, ruleValue] of Object.entries(conditions)) {
-				if (!this.evaluateCondition(operator as ComparisonOperator, productValue, ruleValue)) {
-					return false;
-				}
-			}
+	private evaluateFilter(value: unknown, filter: Record<ComparisonOperator, RuleValue>): boolean {
+		// If value is undefined, the filter should fail
+		if (value === undefined) {
+			return false;
 		}
 
-		return true;
+		return Object.entries(filter).every(([operator, targetValue]) => {
+			const op = operator as ComparisonOperator;
+			if (!Object.values(ComparisonOperators).includes(op)) {
+				return false;
+			}
+
+			return this.evaluateOperator(value, op, targetValue);
+		});
 	}
 
 	/**
-	 * Evaluates a single condition
+	 * Evaluates a single operator
 	 */
-	protected evaluateCondition(
+	private evaluateOperator(
+		value: unknown,
 		operator: ComparisonOperator,
-		productValue: unknown,
-		ruleValue: RuleValue,
+		targetValue: RuleValue,
 	): boolean {
+		// Handle type mismatches for numeric comparisons
+		if (['gt', 'gte', 'lt', 'lte'].includes(operator)) {
+			if (typeof value !== 'number' || typeof targetValue !== 'number') {
+				return false;
+			}
+		}
+
 		switch (operator) {
-			case ComparisonOperators.eq:
-				return productValue === ruleValue;
-			case ComparisonOperators.ne:
-				return productValue !== ruleValue;
-			case ComparisonOperators.gt:
-				return (
-					typeof productValue === 'number' &&
-					typeof ruleValue === 'number' &&
-					productValue > ruleValue
-				);
-			case ComparisonOperators.gte:
-				return (
-					typeof productValue === 'number' &&
-					typeof ruleValue === 'number' &&
-					productValue >= ruleValue
-				);
-			case ComparisonOperators.lt:
-				return (
-					typeof productValue === 'number' &&
-					typeof ruleValue === 'number' &&
-					productValue < ruleValue
-				);
-			case ComparisonOperators.lte:
-				return (
-					typeof productValue === 'number' &&
-					typeof ruleValue === 'number' &&
-					productValue <= ruleValue
-				);
-			case ComparisonOperators.in:
-				return Array.isArray(ruleValue) && ruleValue.includes(productValue as string | number);
-			case ComparisonOperators.notIn:
-				return Array.isArray(ruleValue) && !ruleValue.includes(productValue as string | number);
+			case 'eq':
+				return value === targetValue;
+			case 'ne':
+				return value !== targetValue;
+			case 'gt':
+				return (value as number) > (targetValue as number);
+			case 'gte':
+				return (value as number) >= (targetValue as number);
+			case 'lt':
+				return (value as number) < (targetValue as number);
+			case 'lte':
+				return (value as number) <= (targetValue as number);
+			case 'in':
+				return Array.isArray(targetValue) && targetValue.includes(value as string | number);
+			case 'notIn':
+				return Array.isArray(targetValue) && !targetValue.includes(value as string | number);
 			default:
 				return false;
 		}

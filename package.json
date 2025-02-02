@@ -58,9 +58,6 @@
   ],
   "author": "phr3nzy <adilosama47@gmail.com>",
   "license": "MIT",
-  "dependencies": {
-    "zod": "^3.22.2"
-  },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",

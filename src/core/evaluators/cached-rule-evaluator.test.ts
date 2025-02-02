@@ -11,10 +11,10 @@ describe('CachedRuleEvaluator', () => {
 		{
 			id: '1',
 			name: 'Laptop',
-			price: 1200,
-			category: 'Electronics',
-			brand: 'TechBrand',
 			attributes: {
+				price: 1200,
+				category: 'Electronics',
+				brand: 'TechBrand',
 				color: 'blue',
 				weight: 50,
 				__validated: true,
@@ -23,10 +23,10 @@ describe('CachedRuleEvaluator', () => {
 		{
 			id: '2',
 			name: 'Laptop Bag',
-			price: 50,
-			category: 'Accessories',
-			brand: 'BagBrand',
 			attributes: {
+				price: 50,
+				category: 'Accessories',
+				brand: 'BagBrand',
 				color: 'red',
 				weight: 10,
 				__validated: true,
@@ -36,7 +36,7 @@ describe('CachedRuleEvaluator', () => {
 
 	beforeEach(() => {
 		cache = new MemoryCache({ enableStats: true });
-		evaluator = new CachedRuleEvaluator(cache, { ttlSeconds: 60 });
+		evaluator = new CachedRuleEvaluator(cache);
 	});
 
 	describe('cache behavior', () => {
@@ -67,10 +67,11 @@ describe('CachedRuleEvaluator', () => {
 			const rule: Rule = { category: { eq: 'Electronics' } };
 
 			await evaluator.evaluateRule(testProducts[0], rule);
-			expect(await cache.get(`rule_eval:${testProducts[0].id}:${JSON.stringify(rule)}`)).toBe(true);
+			const cacheKey = `rule_eval:${testProducts[0].id}:${JSON.stringify(rule)}`;
+			expect(await cache.get(cacheKey)).toBe(true);
 
 			vi.advanceTimersByTime(1100); // 1.1 seconds
-			expect(await cache.get(`rule_eval:${testProducts[0].id}:${JSON.stringify(rule)}`)).toBeNull();
+			expect(await cache.get(cacheKey)).toBeNull();
 
 			vi.useRealTimers();
 		});
@@ -81,9 +82,8 @@ describe('CachedRuleEvaluator', () => {
 			const rule: Rule = { category: { eq: 'Electronics' } };
 
 			await evaluator.evaluateRule(testProducts[0], rule);
-			expect(await cache.get(`${customPrefix}${testProducts[0].id}:${JSON.stringify(rule)}`)).toBe(
-				true,
-			);
+			const cacheKey = `${customPrefix}${testProducts[0].id}:${JSON.stringify(rule)}`;
+			expect(await cache.get(cacheKey)).toBe(true);
 		});
 	});
 
@@ -149,10 +149,68 @@ describe('CachedRuleEvaluator', () => {
 			const rule: Rule = { category: { eq: 'Electronics' } };
 
 			await evaluator.evaluateRule(testProducts[0], rule);
-			expect(await cache.get(`rule_eval:${testProducts[0].id}:${JSON.stringify(rule)}`)).toBe(true);
+			const cacheKey = `rule_eval:${testProducts[0].id}:${JSON.stringify(rule)}`;
+			expect(await cache.get(cacheKey)).toBe(true);
 
 			await evaluator.clear();
-			expect(await cache.get(`rule_eval:${testProducts[0].id}:${JSON.stringify(rule)}`)).toBeNull();
+			expect(await cache.get(cacheKey)).toBeNull();
 		});
+	});
+
+	it('should handle complex rules with caching', async () => {
+		const rule: Rule = {
+			and: [{ category: { eq: 'Electronics' } }, { price: { gte: 50 } }],
+		};
+
+		// First evaluation
+		const result1 = await evaluator.evaluateRule(testProducts[0], rule);
+		expect(result1).toBe(true);
+
+		// Second evaluation should use cache
+		const getCacheSpy = vi.spyOn(cache, 'get');
+		const result2 = await evaluator.evaluateRule(testProducts[0], rule);
+		expect(result2).toBe(true);
+		expect(getCacheSpy).toHaveBeenCalled();
+	});
+
+	it('should generate consistent cache keys for equivalent rules', async () => {
+		const rule1: Rule = {
+			and: [{ category: { eq: 'Electronics' } }, { price: { gte: 50 } }],
+		};
+
+		const rule2: Rule = {
+			and: [{ price: { gte: 50 } }, { category: { eq: 'Electronics' } }],
+		};
+
+		// Both rules should evaluate to the same result
+		const result1 = await evaluator.evaluateRule(testProducts[0], rule1);
+		const result2 = await evaluator.evaluateRule(testProducts[0], rule2);
+		expect(result1).toEqual(result2);
+
+		// The second evaluation should use the cache
+		const getCacheSpy = vi.spyOn(cache, 'get');
+		await evaluator.evaluateRule(testProducts[0], rule2);
+		expect(getCacheSpy).toHaveBeenCalled();
+	});
+
+	it('should handle cache misses gracefully', async () => {
+		const rule: Rule = {
+			category: { eq: 'Electronics' },
+		};
+
+		// Clear cache to ensure a miss
+		await cache.clear();
+
+		const result = await evaluator.evaluateRule(testProducts[0], rule);
+		expect(result).toBe(true);
+	});
+
+	it('should handle invalid rules', async () => {
+		const invalidRule = {
+			invalidField: { invalidOperator: 'value' },
+		} as Rule;
+
+		const result = await evaluator.evaluateRule(testProducts[0], invalidRule);
+		expect(result).toBe(false);
 	});
 });

@@ -1,5 +1,4 @@
 import type { DynamicAttributes } from '../attributes/types';
-import { z } from 'zod';
 
 /**
  * Base product type that can be used with rules
@@ -14,21 +13,6 @@ export type Product = {
 	 * Display name of the product
 	 */
 	name: string;
-
-	/**
-	 * Price of the product
-	 */
-	price: number;
-
-	/**
-	 * Category of the product
-	 */
-	category: string;
-
-	/**
-	 * Brand of the product
-	 */
-	brand: string;
 
 	/**
 	 * Dynamic attributes that have been validated against their definitions
@@ -68,27 +52,13 @@ export type BaseFilter = {
 };
 
 /**
- * Product attributes that can be used in rules
- */
-export const ProductAttributes = {
-	price: 'price',
-	category: 'category',
-	brand: 'brand',
-} as const;
-
-/**
- * Type for product attributes
- */
-export type ProductAttribute = keyof typeof ProductAttributes;
-
-/**
  * Single rule structure with recursive AND/OR support
  */
 export type Rule = {
-	[K in ProductAttribute]?: BaseFilter;
-} & {
+	[key: string]: BaseFilter | Rule[] | { [key: string]: BaseFilter };
 	and?: Rule[];
 	or?: Rule[];
+	attributes?: { [key: string]: BaseFilter };
 };
 
 /**

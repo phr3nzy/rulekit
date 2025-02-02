@@ -11,10 +11,10 @@ describe('RuleEngine', () => {
 		{
 			id: '1',
 			name: 'Laptop',
-			price: 1200,
-			category: 'Electronics',
-			brand: 'TechBrand',
 			attributes: {
+				price: 1200,
+				category: 'Electronics',
+				brand: 'TechBrand',
 				color: 'blue',
 				weight: 50,
 				__validated: true,
@@ -23,10 +23,10 @@ describe('RuleEngine', () => {
 		{
 			id: '2',
 			name: 'Laptop Bag',
-			price: 50,
-			category: 'Accessories',
-			brand: 'BagBrand',
 			attributes: {
+				price: 50,
+				category: 'Accessories',
+				brand: 'BagBrand',
 				color: 'red',
 				weight: 10,
 				__validated: true,
@@ -35,10 +35,10 @@ describe('RuleEngine', () => {
 		{
 			id: '3',
 			name: 'Wireless Mouse',
-			price: 30,
-			category: 'Accessories',
-			brand: 'TechBrand',
 			attributes: {
+				price: 30,
+				category: 'Accessories',
+				brand: 'TechBrand',
 				color: 'red',
 				weight: 10,
 				__validated: true,
@@ -47,10 +47,10 @@ describe('RuleEngine', () => {
 		{
 			id: '4',
 			name: 'Desktop PC',
-			price: 2000,
-			category: 'Electronics',
-			brand: 'TechBrand',
 			attributes: {
+				price: 2000,
+				category: 'Electronics',
+				brand: 'TechBrand',
 				color: 'blue',
 				weight: 50,
 				__validated: true,
@@ -59,10 +59,10 @@ describe('RuleEngine', () => {
 		{
 			id: '5',
 			name: 'Keyboard',
-			price: 80,
-			category: 'Accessories',
-			brand: 'TechBrand',
 			attributes: {
+				price: 80,
+				category: 'Accessories',
+				brand: 'TechBrand',
 				color: 'blue',
 				weight: 50,
 				__validated: true,
@@ -79,7 +79,10 @@ describe('RuleEngine', () => {
 		it('should find products matching source rules', async () => {
 			const rules: Rule[] = [
 				{
-					and: [{ category: { eq: 'Electronics' } }, { price: { gt: 1000 } }],
+					and: [
+						{ attributes: { category: { eq: 'Electronics' } } },
+						{ attributes: { price: { gt: 1000 } } },
+					],
 				},
 			];
 
@@ -92,9 +95,12 @@ describe('RuleEngine', () => {
 			const rules: Rule[] = [
 				{
 					or: [
-						{ category: { eq: 'Electronics' } },
+						{ attributes: { category: { eq: 'Electronics' } } },
 						{
-							and: [{ category: { eq: 'Accessories' } }, { brand: { eq: 'TechBrand' } }],
+							and: [
+								{ attributes: { category: { eq: 'Accessories' } } },
+								{ attributes: { brand: { eq: 'TechBrand' } } },
+							],
 						},
 					],
 				},
@@ -108,10 +114,13 @@ describe('RuleEngine', () => {
 
 	describe('recommended product finding', () => {
 		it('should find recommended products excluding source products', async () => {
-			const sourceProducts = testProducts.filter(p => p.category === 'Electronics');
+			const sourceProducts = testProducts.filter(p => p.attributes.category === 'Electronics');
 			const recommendationRules: Rule[] = [
 				{
-					and: [{ category: { eq: 'Accessories' } }, { brand: { eq: 'TechBrand' } }],
+					and: [
+						{ attributes: { category: { eq: 'Accessories' } } },
+						{ attributes: { brand: { eq: 'TechBrand' } } },
+					],
 				},
 			];
 
@@ -129,7 +138,10 @@ describe('RuleEngine', () => {
 			const sourceProducts = [testProducts[0]]; // Laptop
 			const recommendationRules: Rule[] = [
 				{
-					and: [{ category: { eq: 'Accessories' } }, { price: { lt: 100 } }],
+					and: [
+						{ attributes: { category: { eq: 'Accessories' } } },
+						{ attributes: { price: { lt: 100 } } },
+					],
 				},
 			];
 
@@ -150,10 +162,13 @@ describe('RuleEngine', () => {
 				id: 'cs1',
 				name: 'Electronics with Accessories',
 				ruleSet: {
-					sourceRules: [{ category: { eq: 'Electronics' } }],
+					sourceRules: [{ attributes: { category: { eq: 'Electronics' } } }],
 					recommendationRules: [
 						{
-							and: [{ category: { eq: 'Accessories' } }, { brand: { eq: 'TechBrand' } }],
+							and: [
+								{ attributes: { category: { eq: 'Accessories' } } },
+								{ attributes: { brand: { eq: 'TechBrand' } } },
+							],
 						},
 					],
 				},
@@ -175,8 +190,8 @@ describe('RuleEngine', () => {
 				id: 'cs1',
 				name: 'Electronics with Accessories',
 				ruleSet: {
-					sourceRules: [{ category: { eq: 'Electronics' } }],
-					recommendationRules: [{ category: { eq: 'Accessories' } }],
+					sourceRules: [{ attributes: { category: { eq: 'Electronics' } } }],
+					recommendationRules: [{ attributes: { category: { eq: 'Accessories' } } }],
 				},
 				isActive: false,
 				createdAt: new Date(),
@@ -192,7 +207,7 @@ describe('RuleEngine', () => {
 
 	describe('caching behavior', () => {
 		it('should utilize cache for repeated operations', async () => {
-			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+			const rules: Rule[] = [{ attributes: { category: { eq: 'Electronics' } } }];
 
 			// First call - should miss cache
 			await engine.findSourceProducts(testProducts, rules);
@@ -210,7 +225,7 @@ describe('RuleEngine', () => {
 		it('should use BaseRuleEvaluator when caching is disabled', async () => {
 			// Create engine without caching
 			const noCacheEngine = new RuleEngine({ enableCaching: false });
-			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+			const rules: Rule[] = [{ attributes: { category: { eq: 'Electronics' } } }];
 
 			// Execute operations
 			const sourceProducts = await noCacheEngine.findSourceProducts(testProducts, rules);
@@ -221,7 +236,7 @@ describe('RuleEngine', () => {
 		});
 
 		it('should clear cache when requested', async () => {
-			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+			const rules: Rule[] = [{ attributes: { category: { eq: 'Electronics' } } }];
 
 			// First call
 			await engine.findSourceProducts(testProducts, rules);
@@ -242,19 +257,23 @@ describe('RuleEngine', () => {
 			const largeProductSet: Product[] = Array.from({ length: 1000 }, (_, i) => ({
 				...testProducts[i % testProducts.length],
 				id: `${i + 1}`,
+				attributes: {
+					...testProducts[i % testProducts.length].attributes,
+					__validated: true,
+				},
 			}));
 
-			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+			const rules: Rule[] = [{ attributes: { category: { eq: 'Electronics' } } }];
 			const sourceProducts = await engine.findSourceProducts(largeProductSet, rules);
 
 			expect(sourceProducts).toHaveLength(400); // 2/5 of products are Electronics
-			expect(sourceProducts[0].category).toBe('Electronics');
-			expect(sourceProducts[sourceProducts.length - 1].category).toBe('Electronics');
+			expect(sourceProducts[0].attributes.category).toBe('Electronics');
+			expect(sourceProducts[sourceProducts.length - 1].attributes.category).toBe('Electronics');
 		});
 
 		it('should respect maxBatchSize configuration', async () => {
 			engine = new RuleEngine({ cache, maxBatchSize: 2 });
-			const rules: Rule[] = [{ category: { eq: 'Electronics' } }];
+			const rules: Rule[] = [{ attributes: { category: { eq: 'Electronics' } } }];
 
 			const sourceProducts = await engine.findSourceProducts(testProducts, rules);
 			expect(sourceProducts).toHaveLength(2);
