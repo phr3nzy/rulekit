@@ -40,14 +40,13 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage
           files: ./coverage/coverage-final.json,./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
           verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   benchmark:
     runs-on: ubuntu-latest
