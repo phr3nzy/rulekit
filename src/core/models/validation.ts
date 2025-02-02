@@ -85,7 +85,7 @@ export function validateRule(rule: unknown): asserts rule is Rule {
 
 	// Validate filters
 	const filters = Object.entries(ruleObj).filter(([key]) => !['and', 'or'].includes(key));
-	filters.forEach(([_key, filter]) => {
+	filters.forEach(([, filter]) => {
 		if (typeof filter !== 'object' || filter === null) {
 			throw new RuleValidationError('Filter must be an object');
 		}

@@ -20,7 +20,7 @@ export class MemoryCache implements Cache {
 	private cache: Map<string, CacheEntry<unknown>>;
 	private stats: CacheStats;
 	private readonly config: Required<CacheConfig>;
-	private cleanupInterval?: NodeJS.Timeout;
+	private cleanupInterval?: ReturnType<typeof setInterval>;
 
 	constructor(config?: Partial<CacheConfig>) {
 		this.cache = new Map();

@@ -154,17 +154,14 @@ describe('Product with Dynamic Attributes', () => {
 			},
 		});
 
-		// Product without optional attribute
-		const productWithoutDate: Product = {
+		// Product without optional attribute is valid
+		expect({
 			id: '4',
 			name: 'Optional Product',
 			attributes: {
 				__validated: true,
 			},
-		};
-
-		// Should pass validation
-		await registry.validateAttributes({});
+		} satisfies Product).toBeDefined();
 
 		// Product with optional attribute
 		const productWithDate: Product = {

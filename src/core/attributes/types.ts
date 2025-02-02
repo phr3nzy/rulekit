@@ -10,19 +10,19 @@ export const AttributeType = {
 	ARRAY: 'array',
 } as const;
 
-export type AttributeType = (typeof AttributeType)[keyof typeof AttributeType];
+export type AttributeTypeValue = (typeof AttributeType)[keyof typeof AttributeType];
 
 /**
  * Base validation rules for attributes
  */
 export type ValidationRule = {
-	type: AttributeType;
+	type: AttributeTypeValue;
 	required?: boolean;
 	min?: number;
 	max?: number;
 	pattern?: string;
 	enum?: readonly string[];
-	arrayType?: AttributeType;
+	arrayType?: AttributeTypeValue;
 	/**
 	 * Custom validation function that can access other attributes
 	 * @param value - The value to validate
@@ -37,7 +37,7 @@ export type ValidationRule = {
  */
 export type AttributeDefinition = {
 	name: string;
-	type: AttributeType;
+	type: AttributeTypeValue;
 	description: string;
 	validation: ValidationRule;
 	defaultValue?: unknown;
@@ -51,7 +51,7 @@ export type AttributeRegistry = Map<string, AttributeDefinition>;
 /**
  * Type-safe attribute value based on its type
  */
-export type AttributeValue<T extends AttributeType> = T extends typeof AttributeType.STRING
+export type AttributeValue<T extends AttributeTypeValue> = T extends typeof AttributeType.STRING
 	? string
 	: T extends typeof AttributeType.NUMBER
 		? number
