@@ -55,7 +55,7 @@ export type BaseFilter = {
  * Single rule structure with recursive AND/OR support
  */
 export type Rule = {
-	[key: string]: BaseFilter | Rule[] | { [key: string]: BaseFilter };
+	[key: string]: BaseFilter | Rule[] | { [key: string]: BaseFilter } | undefined;
 	and?: Rule[];
 	or?: Rule[];
 	attributes?: { [key: string]: BaseFilter };

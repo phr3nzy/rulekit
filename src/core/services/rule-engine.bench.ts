@@ -187,6 +187,13 @@ describe('RuleEngine Performance Benchmarks', () => {
 	});
 
 	describe('Cache Performance Benchmarks', () => {
+		bench('Cache performance with simple rules', async () => {
+			const engine = new RuleEngine({ enableCaching: true, cacheTTLSeconds: 3600 });
+			const rules: Rule[] = [{ attributes: { category: { eq: PRODUCT_CATEGORIES.ELECTRONICS } } }];
+
+			await engine.findSourceProducts(mediumDataset, rules);
+		});
+
 		bench('Cache performance with complex rules', async () => {
 			const engine = new RuleEngine({ enableCaching: true, cacheTTLSeconds: 3600 });
 			const rules: Rule[] = [

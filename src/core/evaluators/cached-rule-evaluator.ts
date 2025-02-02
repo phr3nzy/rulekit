@@ -20,7 +20,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 	/**
 	 * Evaluates a single product against a rule with caching
 	 */
-	async evaluateRule(product: Product, rule: Rule): Promise<boolean> {
+	override async evaluateRule(product: Product, rule: Rule): Promise<boolean> {
 		const cacheKey = this.generateCacheKey(product, rule);
 		const cachedResult = await this.cache.get<boolean>(cacheKey);
 
@@ -37,7 +37,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 	/**
 	 * Evaluates multiple products against a single rule with caching
 	 */
-	async evaluateRuleBatch(products: Product[], rule: Rule): Promise<boolean[]> {
+	override async evaluateRuleBatch(products: Product[], rule: Rule): Promise<boolean[]> {
 		const results: boolean[] = [];
 		const uncachedProducts: Product[] = [];
 		const uncachedIndices: number[] = [];
@@ -78,7 +78,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 	/**
 	 * Evaluates a single product against multiple rules with caching
 	 */
-	async evaluateRules(product: Product, rules: Rule[]): Promise<boolean> {
+	override async evaluateRules(product: Product, rules: Rule[]): Promise<boolean> {
 		const results = await Promise.all(rules.map(rule => this.evaluateRule(product, rule)));
 		return results.some(Boolean);
 	}
@@ -86,7 +86,7 @@ export class CachedRuleEvaluator extends BaseRuleEvaluator {
 	/**
 	 * Clears the cache
 	 */
-	async clear(): Promise<void> {
+	override async clear(): Promise<void> {
 		await this.cache.clear();
 	}
 

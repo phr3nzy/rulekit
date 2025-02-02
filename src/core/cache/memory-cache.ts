@@ -81,7 +81,9 @@ export class MemoryCache implements Cache {
 		if (this.cache.size >= this.config.maxItems) {
 			// Remove oldest entry
 			const firstKey = this.cache.keys().next().value;
-			this.cache.delete(firstKey);
+			if (firstKey) {
+				this.cache.delete(firstKey);
+			}
 		}
 
 		const entry: CacheEntry<T> = {
