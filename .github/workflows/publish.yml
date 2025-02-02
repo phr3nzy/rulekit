@@ -6,8 +6,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Ensure we're on main branch
-    if: github.ref == 'refs/heads/main'
+    # Remove the main branch check since we want this to run on releases
     permissions:
       contents: read
       id-token: write
