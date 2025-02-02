@@ -81,12 +81,25 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 			return false;
 		}
 
+		// Check for Symbol keys
+		if (Object.getOwnPropertySymbols(filter).length > 0) {
+			return false;
+		}
+
+		// Check for invalid operators
+		const hasInvalidOperator = Object.keys(filter).some(operator => {
+			if (typeof operator !== 'string') {
+				return true;
+			}
+			return !Object.values(ComparisonOperators).includes(operator as ComparisonOperator);
+		});
+
+		if (hasInvalidOperator) {
+			return false;
+		}
+
 		return Object.entries(filter).every(([operator, targetValue]) => {
 			const op = operator as ComparisonOperator;
-			if (!Object.values(ComparisonOperators).includes(op)) {
-				return false;
-			}
-
 			return this.evaluateOperator(value, op, targetValue);
 		});
 	}
