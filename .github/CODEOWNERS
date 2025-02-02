@@ -1,0 +1,13 @@
+# These owners will be the default owners for everything in the repo
+* @phr3nzy
+
+# Package publishing related files
+package.json @phr3nzy
+.github/workflows/publish.yml @phr3nzy
+
+# Source code
+/src/ @phr3nzy
+
+# Configuration files
+*.config.* @phr3nzy
+.github/workflows/ @phr3nzy 

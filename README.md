@@ -2,20 +2,38 @@
 
 A powerful, type-safe, and flexible rule engine for product filtering and cross-selling recommendations in TypeScript/JavaScript applications.
 
-[![Coverage](https://img.shields.io/badge/coverage-98.94%25-brightgreen.svg)](https://github.com/yourusername/rulekit)
+[![CI](https://github.com/phr3nzy/rulekit/actions/workflows/ci.yml/badge.svg)](https://github.com/phr3nzy/rulekit/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/phr3nzy/rulekit/branch/main/graph/badge.svg)](https://codecov.io/gh/phr3nzy/rulekit)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@phr3nzy/rulekit)](https://www.npmjs.com/package/@phr3nzy/rulekit)
 
 ## 🌟 Features
 
 - **Type-Safe Rule Definitions**: Full TypeScript support with strict type checking
 - **Dynamic Attribute Handling**: Support for products with dynamic, user-defined attributes
 - **Flexible Rule Composition**: Combine rules using AND/OR conditions with unlimited nesting
-- **High Performance**: Optimized evaluation with caching support
+- **High Performance**: Optimized evaluation with caching support (~4,000 ops/sec for simple rules)
 - **Comprehensive Validation**: Built-in validation for rules and configurations
 - **Cross-Selling Support**: Built-in support for product recommendations and cross-selling
 - **Memory Efficient**: Optional TTL and max items for cache management
-- **100% Test Coverage**: All critical paths are thoroughly tested
+- **Thoroughly Tested**: Comprehensive test suite with high code coverage
+
+## 🏃 Benchmarks
+
+```
+Product Filtering:
+· Real-world product filtering (100 products)  4,093.31 ops/sec
+· Complex nested rules (1000 products)           233.15 ops/sec
+· Large dataset processing (10000 products)       34.37 ops/sec
+
+Cache Performance:
+· Simple rules                                   589.11 ops/sec
+· Complex rules                                   35.02 ops/sec
+
+Cross-selling:
+· Multiple source products                       342.25 ops/sec
+```
 
 ## 📦 Installation
 
@@ -416,11 +434,30 @@ pnpm benchmark
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+We welcome contributions to RuleKit! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- Setting up the development environment
+- Running tests
+- Submitting pull requests
+- Code style guidelines
+- Release process
+
+## 📦 Publishing
+
+RuleKit is published to npm with full supply chain security using npm's package provenance. Each release follows these steps:
+
+1. Version update in `package.json`
+2. Git tag matching the version (e.g., `v1.0.1`)
+3. GitHub release created from the tag
+4. Automated publishing via GitHub Actions with:
+   - Version verification
+   - Full test suite execution
+   - Build process
+   - npm publishing with provenance
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+RuleKit is [MIT licensed](LICENSE).
 
 ## 🙏 Acknowledgments
 

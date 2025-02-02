@@ -23,7 +23,7 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage --reporter verbose",
+    "test:coverage": "vitest run --coverage",
     "bench": "vitest bench",
     "bench:watch": "vitest bench --watch",
     "lint": "eslint \"src/**/*.ts\"",
