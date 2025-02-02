@@ -21,7 +21,13 @@
 		"noImplicitThis": false,
 		"strictNullChecks": false,
 		"esModuleInterop": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": [
+				"src/*"
+			]
+		}
 	},
 	"include": [
 		"src/**/*"
