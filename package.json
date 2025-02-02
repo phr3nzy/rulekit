@@ -1,6 +1,6 @@
 {
   "name": "@phr3nzy/rulekit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A powerful and flexible toolkit for building rule-based product recommendations and dynamic filtering",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
