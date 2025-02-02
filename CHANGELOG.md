@@ -7,40 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-02-01
 
-### Breaking Changes
-
-- Complete rewrite of the rule engine implementation
-- Removed dependency on json-logic-js in favor of a custom rule evaluation engine
-- Changed rule format to be more intuitive and type-safe
-- Updated API to be more flexible and performant
-
 ### Added
 
-- New `RuleEngine` implementation with improved performance
-- Caching support with `MemoryCache` implementation
-- Batch processing support for large datasets
-- Comprehensive test suite with unit and integration tests
+- Initial release of RuleKit
+- Type-safe rule engine implementation with TypeScript
+- Dynamic attribute handling with validation
+- Flexible rule composition with AND/OR conditions
+- High-performance evaluation with caching support
+- Cross-selling and product recommendation features
+- Memory-efficient caching with TTL and max items
+- Comprehensive test suite with >90% coverage
+- Performance benchmarks and optimization
+- GitHub Actions CI/CD pipeline
+- npm package publishing with provenance
+- Detailed documentation and examples
+- Contributing guidelines and code of conduct
+
+### Features
+
+- Product attribute registry with validation
+- Rule evaluation engine with caching
+- Batch processing for large datasets
+- Cross-selling configuration
+- Performance monitoring and statistics
+- Memory usage optimization
+- Type-safe API design
+
+### Developer Experience
+
+- Full TypeScript support
+- Comprehensive documentation
+- Example code and use cases
 - Performance benchmarks
-- Type-safe rule validation using Zod (with plans to explore more performant alternatives)
-- Support for complex nested AND/OR conditions
-- Cross-selling configuration support
-- Improved TypeScript types and documentation
+- Contributing guidelines
+- Code style enforcement
+- Automated testing and CI
 
-### Changed
+[1.0.0]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.0
 
-- Rule evaluation is now asynchronous for better performance
-- Rule format is now more structured and type-safe
-- Improved error handling and edge case management
-- Better memory management for large datasets
-- More flexible configuration options
-
-### Removed
-
-- Old rule engine implementation
-- JSON Logic dependency
-- Legacy rule format support
-
-## [0.0.1] - 2024-01-31
+## [0.0.1] - 2024-12-01
 
 ### Added
 
