@@ -10,6 +10,19 @@ export type {
 } from './core/models/types';
 export { ComparisonOperators } from './core/models/types';
 
+// Attribute types and validation
+export { AttributeType } from './core/attributes/types';
+export type {
+	AttributeTypeValue,
+	ValidationRule,
+	AttributeDefinition,
+	AttributeRegistry,
+	AttributeValue,
+	DynamicAttributes,
+} from './core/attributes/types';
+export { ProductAttributeRegistry } from './core/attributes/registry';
+export { validateAttribute, AttributeValidationError } from './core/attributes/validator';
+
 // Validation
 export {
 	validateRule,
