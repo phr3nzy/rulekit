@@ -36,10 +36,10 @@ pnpm add @phr3nzy/rulekit
 ```typescript
 import { RuleEngine, ProductAttributeRegistry } from '@phr3nzy/rulekit';
 
-// 1. Create an attribute registry
+// 1. Create an attribute registry for validation
 const registry = new ProductAttributeRegistry();
 
-// 2. Register product attributes with validation
+// 2. Register product attributes with validation rules
 registry.registerAttribute({
 	name: 'price',
 	type: 'number',
@@ -57,20 +57,23 @@ registry.registerAttribute({
 	},
 });
 
-// 3. Create products with validated attributes
-const products = [
-	{
-		id: '1',
-		name: 'Gaming Laptop',
-		attributes: {
-			price: 1299.99,
-			category: 'Electronics',
-		},
+// 3. Create and validate products
+const product = {
+	id: '1',
+	name: 'Gaming Laptop',
+	attributes: {
+		price: 1299.99,
+		category: 'Electronics',
+		__validated: true,
 	},
-	// ... more products
-];
+};
 
-// 4. Create a rule engine instance with configuration
+// Validate product attributes before using them
+await registry.validateAttributes(product.attributes);
+
+const products = [product];
+
+// 4. Create a rule engine instance
 const engine = new RuleEngine({
 	enableCaching: true,
 	cacheTTLSeconds: 3600, // 1 hour
@@ -78,6 +81,7 @@ const engine = new RuleEngine({
 });
 
 // 5. Define cross-selling configuration
+// Note: Make sure rule attributes match registered attributes
 const config = {
 	id: 'gaming-accessories',
 	name: 'Gaming Accessories Cross-Sell',
@@ -85,7 +89,11 @@ const config = {
 	ruleSet: {
 		sourceRules: [
 			{
-				and: [{ category: { eq: 'Electronics' } }, { price: { gte: 1000 } }],
+				and: [
+					// These attributes should match registered ones
+					{ category: { eq: 'Electronics' } },
+					{ price: { gte: 1000 } },
+				],
 			},
 		],
 		recommendationRules: [
@@ -273,6 +281,46 @@ interface AttributeDefinition {
 		pattern?: RegExp; // For strings
 		custom?: (value: any, attributes: Record<string, unknown>) => boolean | Promise<boolean>;
 	};
+}
+```
+
+## ⚠️ Important Notes
+
+### Attribute Validation
+
+The `ProductAttributeRegistry` and `RuleEngine` are currently separate components:
+
+1. The registry provides attribute validation but does not automatically integrate with the rule engine
+2. You must validate product attributes manually before using them with the rule engine
+3. Ensure that rules only reference attributes that are registered
+4. Consider validating products before adding them to your product pool
+
+Best practices:
+
+```typescript
+// 1. Always validate products before using them
+const product = {
+	id: '1',
+	name: 'Product',
+	attributes: {
+		price: 100,
+		category: 'Electronics',
+	},
+};
+
+// Validate before use
+await registry.validateAttributes(product.attributes);
+
+// 2. Validate your rule attributes match registered ones
+const rule = {
+	price: { gt: 50 }, // ✅ 'price' is registered
+	unknown: { eq: true }, // ❌ 'unknown' is not registered
+};
+
+// 3. Consider wrapping product creation with validation
+async function createProduct(data) {
+	await registry.validateAttributes(data.attributes);
+	return data;
 }
 ```
 
