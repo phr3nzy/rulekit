@@ -13,27 +13,10 @@ A powerful, type-safe, and flexible rule engine for product filtering and cross-
 - **Type-Safe Rule Definitions**: Full TypeScript support with strict type checking
 - **Dynamic Attribute Handling**: Support for products with dynamic, user-defined attributes
 - **Flexible Rule Composition**: Combine rules using AND/OR conditions with unlimited nesting
-- **High Performance**: Optimized evaluation with caching support (~4,000 ops/sec for simple rules)
 - **Comprehensive Validation**: Built-in validation for rules and configurations
 - **Cross-Selling Support**: Built-in support for product recommendations and cross-selling
 - **Memory Efficient**: Optional TTL and max items for cache management
 - **Thoroughly Tested**: Comprehensive test suite with high code coverage
-
-## 🏃 Benchmarks
-
-```
-Product Filtering:
-· Real-world product filtering (100 products)  4,093.31 ops/sec
-· Complex nested rules (1000 products)           233.15 ops/sec
-· Large dataset processing (10000 products)       34.37 ops/sec
-
-Cache Performance:
-· Simple rules                                   589.11 ops/sec
-· Complex rules                                   35.02 ops/sec
-
-Cross-selling:
-· Multiple source products                       342.25 ops/sec
-```
 
 ## 📦 Installation
 
@@ -53,13 +36,28 @@ pnpm add @phr3nzy/rulekit
 ```typescript
 import { RuleEngine, ProductAttributeRegistry } from '@phr3nzy/rulekit';
 
-// 1. Define your product attributes
+// 1. Create an attribute registry
 const registry = new ProductAttributeRegistry();
-registry.register('price', { type: 'number', required: true });
-registry.register('category', { type: 'string', required: true });
-registry.register('brand', { type: 'string', required: true });
 
-// 2. Create products with dynamic attributes
+// 2. Register product attributes with validation
+registry.registerAttribute({
+	name: 'price',
+	type: 'number',
+	validation: {
+		required: true,
+		min: 0,
+	},
+});
+
+registry.registerAttribute({
+	name: 'category',
+	type: 'string',
+	validation: {
+		required: true,
+	},
+});
+
+// 3. Create products with validated attributes
 const products = [
 	{
 		id: '1',
@@ -67,21 +65,19 @@ const products = [
 		attributes: {
 			price: 1299.99,
 			category: 'Electronics',
-			brand: 'TechBrand',
-			__validated: true,
 		},
 	},
 	// ... more products
 ];
 
-// 3. Create a rule engine instance
+// 4. Create a rule engine instance with configuration
 const engine = new RuleEngine({
 	enableCaching: true,
-	cacheTTL: 3600, // 1 hour
-	maxCacheItems: 1000,
+	cacheTTLSeconds: 3600, // 1 hour
+	maxBatchSize: 1000,
 });
 
-// 4. Define cross-selling rules
+// 5. Define cross-selling configuration
 const config = {
 	id: 'gaming-accessories',
 	name: 'Gaming Accessories Cross-Sell',
@@ -103,8 +99,8 @@ const config = {
 	updatedAt: new Date(),
 };
 
-// 5. Find recommendations
-const recommendations = await engine.findRecommendations(products, config);
+// 6. Process recommendations
+const { sourceProducts, recommendedProducts } = await engine.processConfig(products, config);
 ```
 
 ## 🎯 Key Benefits
@@ -146,41 +142,36 @@ const recommendations = await engine.findRecommendations(products, config);
 const registry = new ProductAttributeRegistry();
 
 // Simple attribute
-registry.register('price', {
+registry.registerAttribute({
+	name: 'price',
 	type: 'number',
-	required: true,
-	min: 0,
+	validation: {
+		required: true,
+		min: 0,
+	},
 });
 
 // String attribute with validation
-registry.register('sku', {
+registry.registerAttribute({
+	name: 'sku',
 	type: 'string',
-	required: true,
-	pattern: /^[A-Z]{2}-\d{6}$/,
-});
-
-// Enum attribute
-registry.register('status', {
-	type: 'enum',
-	values: ['active', 'discontinued', 'upcoming'],
-});
-
-// Array attribute
-registry.register('tags', {
-	type: 'array',
-	itemType: 'string',
-	minLength: 1,
-	maxLength: 10,
+	validation: {
+		required: true,
+		pattern: /^[A-Z]{2}-\d{6}$/,
+	},
 });
 
 // Custom validation
-registry.register('discount', {
+registry.registerAttribute({
+	name: 'discount',
 	type: 'number',
-	validate: (value, product) => {
-		if (value > product.attributes.price) {
-			throw new Error('Discount cannot be greater than price');
-		}
-		return true;
+	validation: {
+		custom: (value, attributes) => {
+			if (value > attributes.price) {
+				throw new Error('Discount cannot be greater than price');
+			}
+			return true;
+		},
 	},
 });
 ```
@@ -234,58 +225,25 @@ const complexRule = {
 ```typescript
 const engine = new RuleEngine({
 	enableCaching: true,
-	cacheTTL: 3600,
-	maxCacheItems: 1000,
-	maxBatchSize: 100,
+	cacheTTLSeconds: 3600,
+	maxBatchSize: 1000,
 });
 
-// Evaluate a single product against a rule
-const matches = await engine.evaluateRule(product, rule);
-
-// Evaluate multiple products against a rule
-const results = await engine.evaluateRuleBatch(products, rule);
-
 // Find matching source products
-const sourceProducts = await engine.findSourceProducts(products, config);
+const sourceProducts = await engine.findSourceProducts(products, rules);
 
 // Find recommended products
-const recommendations = await engine.findRecommendations(products, config);
+const recommendedProducts = await engine.findRecommendedProducts(
+	sourceProducts,
+	recommendationRules,
+	allProducts,
+);
+
+// Process a complete cross-selling configuration
+const results = await engine.processConfig(config, products);
 
 // Clear cache
 await engine.clearCache();
-```
-
-### Cross-Selling Configuration
-
-```typescript
-const crossSellConfig = {
-	id: 'premium-accessories',
-	name: 'Premium Accessories Cross-Sell',
-	description: 'Recommend premium accessories for high-end products',
-	ruleSet: {
-		sourceRules: [
-			{
-				and: [
-					{ category: { eq: 'Electronics' } },
-					{ price: { gte: 1000 } },
-					{ brand: { in: ['Apple', 'Samsung', 'Sony'] } },
-				],
-			},
-		],
-		recommendationRules: [
-			{
-				and: [
-					{ category: { eq: 'Accessories' } },
-					{ price: { between: [50, 500] } },
-					{ rating: { gte: 4 } },
-				],
-			},
-		],
-	},
-	isActive: true,
-	createdAt: new Date(),
-	updatedAt: new Date(),
-};
 ```
 
 ## 🔧 Configuration Options
@@ -293,167 +251,34 @@ const crossSellConfig = {
 ### Rule Engine Options
 
 ```typescript
-interface RuleEngineOptions {
+interface RuleEngineConfig {
 	enableCaching?: boolean; // Enable/disable caching
-	cacheTTL?: number; // Cache TTL in seconds
-	maxCacheItems?: number; // Maximum items in cache
+	cacheTTLSeconds?: number; // Cache TTL in seconds
 	maxBatchSize?: number; // Maximum batch size for processing
-	cacheKeyPrefix?: string; // Prefix for cache keys
+	cache?: Cache; // Custom cache implementation
+	evaluator?: RuleEvaluator; // Custom rule evaluator
 }
 ```
 
 ### Attribute Types
 
 ```typescript
-type AttributeType = 'string' | 'number' | 'enum' | 'array';
-
 interface AttributeDefinition {
-	type: AttributeType;
-	required?: boolean;
-	min?: number; // For numbers
-	max?: number; // For numbers
-	pattern?: RegExp; // For strings
-	values?: string[]; // For enums
-	itemType?: string; // For arrays
-	minLength?: number; // For arrays/strings
-	maxLength?: number; // For arrays/strings
-	validate?: (value: any, product: Product) => boolean;
+	name: string;
+	type: 'string' | 'number' | 'boolean';
+	validation: {
+		required?: boolean;
+		min?: number; // For numbers
+		max?: number; // For numbers
+		pattern?: RegExp; // For strings
+		custom?: (value: any, attributes: Record<string, unknown>) => boolean | Promise<boolean>;
+	};
 }
-```
-
-## 🔍 Advanced Features
-
-### Custom Validation Functions
-
-```typescript
-registry.register('margin', {
-	type: 'number',
-	validate: (value, product) => {
-		const { price, cost } = product.attributes;
-		if (value !== ((price - cost) / price) * 100) {
-			throw new Error('Invalid margin calculation');
-		}
-		return true;
-	},
-});
-```
-
-### Complex Rule Patterns
-
-```typescript
-const seasonalRule = {
-	or: [
-		{
-			and: [
-				{ category: { eq: 'Seasonal' } },
-				{ season: { eq: 'Summer' } },
-				{
-					or: [{ price: { lt: 50 } }, { rating: { gte: 4.5 } }],
-				},
-			],
-		},
-		{
-			and: [{ category: { eq: 'Clearance' } }, { stock: { lt: 10 } }, { margin: { gt: 30 } }],
-		},
-	],
-};
-```
-
-### Batch Processing with Progress
-
-```typescript
-const engine = new RuleEngine({
-	maxBatchSize: 1000,
-	onBatchProgress: (processed, total) => {
-		console.log(`Processed ${processed} of ${total} items`);
-	},
-});
-```
-
-### Cache Management
-
-```typescript
-// Configure cache
-const engine = new RuleEngine({
-	enableCaching: true,
-	cacheTTL: 3600,
-	maxCacheItems: 10000,
-	cacheKeyPrefix: 'prod:rules:',
-});
-
-// Monitor cache stats
-const stats = await engine.getCacheStats();
-console.log(`
-	Hits: ${stats.hits}
-	Misses: ${stats.misses}
-	Items: ${stats.items}
-	Memory: ${stats.memoryUsage}MB
-`);
-
-// Clear specific keys
-await engine.clearCachePattern('prod:rules:electronics:*');
-```
-
-## 🚀 Performance Tips
-
-1. **Enable Caching**
-
-   - Use caching for frequently accessed rules
-   - Set appropriate TTL based on data update frequency
-   - Monitor cache hit/miss ratios
-
-2. **Batch Processing**
-
-   - Use batch processing for large datasets
-   - Adjust `maxBatchSize` based on memory constraints
-   - Implement progress tracking for long-running operations
-
-3. **Rule Optimization**
-
-   - Place most discriminating conditions first
-   - Use simple conditions before complex ones
-   - Minimize deep nesting of conditions
-
-4. **Memory Management**
-   - Set appropriate `maxCacheItems` limit
-   - Clear cache periodically
-   - Monitor memory usage
-
-## 🧪 Testing
-
-```bash
-# Run tests
-pnpm test
-
-# Run tests with coverage
-pnpm test:coverage
-
-# Run performance benchmarks
-pnpm benchmark
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions to RuleKit! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
-
-- Setting up the development environment
-- Running tests
-- Submitting pull requests
-- Code style guidelines
-- Release process
-
-## 📦 Publishing
-
-RuleKit is published to npm with full supply chain security using npm's package provenance. Each release follows these steps:
-
-1. Version update in `package.json`
-2. Git tag matching the version (e.g., `v1.0.1`)
-3. GitHub release created from the tag
-4. Automated publishing via GitHub Actions with:
-   - Version verification
-   - Full test suite execution
-   - Build process
-   - npm publishing with provenance
+We welcome contributions to RuleKit! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## 📄 License
 
