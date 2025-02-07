@@ -1,12 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { ComparisonOperators } from '../models/types';
-import { UIConditionType, UIComponentType } from './types';
+import {
+	UIConditionType,
+	UIComponentType,
+	type UIRuleConfiguration,
+	type UIConditionTypeValue,
+} from './types';
 import { convertUIConfigurationToRules, validateUIConfiguration } from './converter';
 
 describe('UI Configuration Converter', () => {
 	describe('convertUIConfigurationToRules', () => {
 		it('should convert filters to from rules', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				filters: [
 					{
 						name: 'category',
@@ -35,7 +40,7 @@ describe('UI Configuration Converter', () => {
 		});
 
 		it('should convert matchingFrom configuration to from rules', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				matchingFrom: [
 					{
 						name: 'Product',
@@ -63,7 +68,7 @@ describe('UI Configuration Converter', () => {
 		});
 
 		it('should convert matchingTo configuration to to rules', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				matchingTo: [
 					{
 						name: 'Category',
@@ -93,7 +98,7 @@ describe('UI Configuration Converter', () => {
 		});
 
 		it('should combine multiple conditions with AND', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				filters: [
 					{
 						name: 'price',
@@ -119,6 +124,163 @@ describe('UI Configuration Converter', () => {
 			expect(result.fromRules[0]).toHaveProperty('and');
 			expect(result.fromRules[0].and).toHaveLength(2);
 		});
+
+		it('should handle legacy source rules', () => {
+			const config: UIRuleConfiguration = {
+				source: [
+					{
+						name: 'Product',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+							},
+						],
+						values: ['Legacy Product'],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.fromRules).toHaveLength(1);
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					Product: {
+						[ComparisonOperators.eq]: ['Legacy Product'],
+					},
+				},
+			});
+		});
+
+		it('should handle legacy recommendation rules', () => {
+			const config: UIRuleConfiguration = {
+				recommendations: [
+					{
+						name: 'Category',
+						conditions: [
+							{
+								condition: UIConditionType.IN,
+								type: UIComponentType.MULTISELECTOR,
+							},
+						],
+						values: ['Legacy Category'],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.toRules).toHaveLength(1);
+			expect(result.toRules[0]).toEqual({
+				attributes: {
+					Category: {
+						[ComparisonOperators.in]: ['Legacy Category'],
+					},
+				},
+			});
+		});
+
+		it('should handle numeric string conversions for TEXT components', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								max: '100',
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.lte]: 100,
+					},
+				},
+			});
+		});
+
+		it('should handle invalid numeric strings', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								max: 'not a number',
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.lte]: 'not a number',
+					},
+				},
+			});
+		});
+
+		it('should handle null values in TEXT components', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								max: null,
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.lte]: null,
+					},
+				},
+			});
+		});
+
+		it('should throw error for unknown condition type', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'test',
+						conditions: [
+							{
+								condition: 'UNKNOWN' as UIConditionTypeValue,
+								type: UIComponentType.TEXT,
+							},
+						],
+					},
+				],
+			};
+
+			expect(() => convertUIConfigurationToRules(config)).toThrow(
+				'Unknown condition type: UNKNOWN',
+			);
+		});
 	});
 
 	describe('validateUIConfiguration', () => {
@@ -129,7 +291,7 @@ describe('UI Configuration Converter', () => {
 		});
 
 		it('should throw error if filter has no name', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				filters: [
 					{
 						name: '',
@@ -147,7 +309,7 @@ describe('UI Configuration Converter', () => {
 		});
 
 		it('should throw error if filter has no conditions', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				filters: [
 					{
 						name: 'test',
@@ -162,8 +324,106 @@ describe('UI Configuration Converter', () => {
 		});
 
 		it('should throw error if matchingTo has no values', () => {
-			const config = {
+			const config: UIRuleConfiguration = {
 				matchingTo: [
+					{
+						name: 'test',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+							},
+						],
+						values: [],
+					},
+				],
+			};
+
+			expect(() => validateUIConfiguration(config)).toThrow(
+				'To "test" must have at least one value',
+			);
+		});
+
+		it('should throw error if matchingFrom has no name', () => {
+			const config: UIRuleConfiguration = {
+				matchingFrom: [
+					{
+						name: '',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+							},
+						],
+						values: ['test'],
+					},
+				],
+			};
+
+			expect(() => validateUIConfiguration(config)).toThrow('From must have a name');
+		});
+
+		it('should throw error if matchingFrom has no conditions', () => {
+			const config: UIRuleConfiguration = {
+				matchingFrom: [
+					{
+						name: 'test',
+						conditions: [],
+						values: ['test'],
+					},
+				],
+			};
+
+			expect(() => validateUIConfiguration(config)).toThrow(
+				'From "test" must have at least one condition',
+			);
+		});
+
+		it('should throw error if matchingFrom has no values', () => {
+			const config: UIRuleConfiguration = {
+				matchingFrom: [
+					{
+						name: 'test',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+							},
+						],
+						values: [],
+					},
+				],
+			};
+
+			expect(() => validateUIConfiguration(config)).toThrow(
+				'From "test" must have at least one value',
+			);
+		});
+
+		it('should throw error if legacy source rule has no values', () => {
+			const config: UIRuleConfiguration = {
+				source: [
+					{
+						name: 'test',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+							},
+						],
+						values: [],
+					},
+				],
+			};
+
+			expect(() => validateUIConfiguration(config)).toThrow(
+				'From "test" must have at least one value',
+			);
+		});
+
+		it('should throw error if legacy recommendation rule has no values', () => {
+			const config: UIRuleConfiguration = {
+				recommendations: [
 					{
 						name: 'test',
 						conditions: [

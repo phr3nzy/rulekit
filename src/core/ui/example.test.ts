@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { runExample, uiConfig } from './example';
 import { convertUIConfigurationToRules } from './converter';
+import { RuleEngine } from '../services/rule-engine';
 
 describe('UI Configuration Example', () => {
 	it('should convert UI configuration to valid rules', () => {
@@ -53,5 +54,24 @@ describe('UI Configuration Example', () => {
 		expect(result.toEntities).toHaveLength(1);
 		expect(result.toEntities[0].name).toBe('Indoor Chair');
 		expect(result.toEntities[0].attributes.category).toBe('Indoor furniture');
+	});
+
+	it('should handle errors during processing', async () => {
+		// Mock console.error to prevent actual logging
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		// Mock RuleEngine to throw an error
+		const originalProcessConfig = RuleEngine.prototype.processConfig;
+		RuleEngine.prototype.processConfig = vi.fn().mockRejectedValue(new Error('Test error'));
+
+		// Expect runExample to throw
+		await expect(runExample()).rejects.toThrow('Test error');
+
+		// Verify error was logged
+		expect(consoleError).toHaveBeenCalledWith('Error processing rules:', expect.any(Error));
+
+		// Restore mocks
+		consoleError.mockRestore();
+		RuleEngine.prototype.processConfig = originalProcessConfig;
 	});
 });
