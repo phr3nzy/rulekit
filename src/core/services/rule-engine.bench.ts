@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest';
 import { RuleEngine } from '../../index';
-import type { Product, Rule } from '../models/types';
+import type { Entity, Rule } from '../models/types';
 
 /**
  * Type-safe product categories for consistent testing
@@ -57,7 +57,7 @@ type AvailabilityState = (typeof AVAILABILITY_STATES)[keyof typeof AVAILABILITY_
  * @param count Number of products to generate
  * @returns Array of typed Product objects
  */
-const generateRealisticProducts = (count: number): Product[] => {
+const generateRealisticEntities = (count: number): Entity[] => {
 	const categories = Object.values(PRODUCT_CATEGORIES);
 	const brands = Object.values(PRODUCT_BRANDS);
 	const conditions = Object.values(PRODUCT_CONDITIONS);
@@ -139,23 +139,23 @@ const createComplexNestedRule = (): Rule => ({
 
 describe('RuleEngine Performance Benchmarks', () => {
 	// Pre-generate datasets to ensure consistent benchmarking
-	const smallDataset = generateRealisticProducts(100);
-	const mediumDataset = generateRealisticProducts(1000);
-	const largeDataset = generateRealisticProducts(10000);
+	const smallDataset = generateRealisticEntities(100);
+	const mediumDataset = generateRealisticEntities(1000);
+	const largeDataset = generateRealisticEntities(10000);
 
-	describe('Product Filtering Benchmarks', () => {
-		bench('Real-world product filtering (100 products)', async () => {
-			const engine = new RuleEngine({ enableCaching: false });
-			await engine.findSourceProducts(smallDataset, [createPremiumElectronicsRule()]);
+	describe('Entity Matching Benchmarks', () => {
+		bench('Real-world entity matching (100 entities)', async () => {
+			const engine = new RuleEngine();
+			await engine.findMatchingFrom(smallDataset, [createPremiumElectronicsRule()]);
 		});
 
-		bench('Complex nested rules (1000 products)', async () => {
-			const engine = new RuleEngine({ enableCaching: false });
-			await engine.findSourceProducts(mediumDataset, [createComplexNestedRule()]);
+		bench('Complex nested rules (1000 entities)', async () => {
+			const engine = new RuleEngine();
+			await engine.findMatchingFrom(mediumDataset, [createComplexNestedRule()]);
 		});
 
-		bench('Large dataset processing (10000 products)', async () => {
-			const engine = new RuleEngine({ enableCaching: false });
+		bench('Large dataset processing (10000 entities)', async () => {
+			const engine = new RuleEngine();
 			const rules: Rule[] = [
 				{
 					and: [
@@ -182,57 +182,20 @@ describe('RuleEngine Performance Benchmarks', () => {
 				},
 			];
 
-			await engine.findSourceProducts(largeDataset, rules);
+			await engine.findMatchingFrom(largeDataset, rules);
 		});
 	});
 
-	describe('Cache Performance Benchmarks', () => {
-		bench('Cache performance with simple rules', async () => {
-			const engine = new RuleEngine({ enableCaching: true, cacheTTLSeconds: 3600 });
-			const rules: Rule[] = [{ attributes: { category: { eq: PRODUCT_CATEGORIES.ELECTRONICS } } }];
-
-			await engine.findSourceProducts(mediumDataset, rules);
-		});
-
-		bench('Cache performance with complex rules', async () => {
-			const engine = new RuleEngine({ enableCaching: true, cacheTTLSeconds: 3600 });
-			const rules: Rule[] = [
-				{
-					and: [
-						{
-							attributes: {
-								category: {
-									in: [PRODUCT_CATEGORIES.ELECTRONICS, PRODUCT_CATEGORIES.SPORTS],
-								},
-							},
-						},
-						{ attributes: { price: { gt: 500 } } },
-						{ attributes: { rating: { gte: 4 } } },
-						{ attributes: { tags: { in: ['tag1'] } } },
-					],
-				},
-			];
-
-			// Warm up cache
-			await engine.findSourceProducts(mediumDataset, rules);
-
-			// Benchmark cached access
-			for (let i = 0; i < 5; i++) {
-				await engine.findSourceProducts(mediumDataset, rules);
-			}
-		});
-	});
-
-	describe('Recommendation Benchmarks', () => {
-		bench('Cross-selling with multiple source products', async () => {
-			const engine = new RuleEngine({ enableCaching: false });
-			const sourceProducts = mediumDataset.filter(
-				(p): p is Product =>
+	describe('Matching Benchmarks', () => {
+		bench('Matching with multiple from entities', async () => {
+			const engine = new RuleEngine();
+			const fromEntities = mediumDataset.filter(
+				(p: Entity): p is Entity =>
 					p.attributes.category === PRODUCT_CATEGORIES.ELECTRONICS &&
 					(p.attributes.price as number) > 1000,
 			);
 
-			const recommendationRules: Rule[] = [
+			const toRules: Rule[] = [
 				{
 					or: [
 						{
@@ -252,7 +215,7 @@ describe('RuleEngine Performance Benchmarks', () => {
 				},
 			];
 
-			await engine.findRecommendedProducts(sourceProducts, recommendationRules, mediumDataset);
+			await engine.findMatchingTo(fromEntities, toRules, mediumDataset);
 		});
 	});
 });

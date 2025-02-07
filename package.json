@@ -1,7 +1,7 @@
 {
   "name": "@phr3nzy/rulekit",
-  "version": "1.0.3",
-  "description": "A powerful and flexible toolkit for building rule-based product recommendations and dynamic filtering",
+  "version": "1.1.0",
+  "description": "A powerful and flexible toolkit for building rule-based matching and filtering systems",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -49,12 +49,12 @@
   "keywords": [
     "rule-engine",
     "rule-kit",
-    "product-recommendations",
-    "cross-selling",
-    "e-commerce",
+    "pattern-matching",
+    "rule-based-systems",
+    "filtering",
     "typescript",
-    "caching",
-    "performance"
+    "matching-engine",
+    "business-rules"
   ],
   "author": "phr3nzy <adilosama47@gmail.com>",
   "license": "MIT",

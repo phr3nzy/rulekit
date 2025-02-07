@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-02-07
+
+### Changed
+
+- Made library more generic and less opinionated:
+  - Renamed Product type to Entity for more generic use cases
+  - Added `matchingFrom` and `matchingTo` as more generic alternatives to `source` and `recommendations`
+  - Renamed internal types and methods to use more generic terminology
+  - Updated example code to use new generic names
+  - Added proper TypeScript deprecation notices for old names
+  - Maintained backward compatibility with existing property names
+
+### Removed
+
+- Removed caching functionality:
+  - Removed CachedRuleEvaluator
+  - Removed MemoryCache implementation
+  - Removed caching-related configuration options
+  - Simplified RuleEngine to use BaseRuleEvaluator by default
+
 ## [1.0.3] - 2025-02-02
 
 ### Added
