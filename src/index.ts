@@ -1,9 +1,9 @@
 // Core types
-export type { Product } from './core/models/types';
+export type { Entity } from './core/models/types';
 export type {
 	Rule,
-	CrossSellingConfig,
-	CrossSellingRuleSet,
+	MatchingConfig,
+	RuleSet,
 	ComparisonOperator,
 	RuleValue,
 	BaseFilter,
@@ -26,17 +26,26 @@ export { validateAttribute, AttributeValidationError } from './core/attributes/v
 // Validation
 export {
 	validateRule,
-	validateCrossSellingRuleSet,
-	validateCrossSellingConfig,
+	validateRuleSet,
+	validateMatchingConfig,
 	RuleValidationError,
 } from './core/models/validation';
 
 // Interfaces
-export type { CacheConfig } from './core/cache/types';
 export type { RuleEvaluator } from './core/evaluators/types';
 
 // Implementations
-export { MemoryCache } from './core/cache/memory-cache';
 export { BaseRuleEvaluator } from './core/evaluators/base-rule-evaluator';
-export { CachedRuleEvaluator } from './core/evaluators/cached-rule-evaluator';
 export { RuleEngine } from './core/services/rule-engine';
+
+// UI Configuration
+export type {
+	UIRuleConfiguration,
+	UIMatchingRule,
+	UIFilter,
+	UICondition,
+	UIConditionTypeValue,
+	UIComponentTypeValue,
+} from './core/ui/types';
+export { UIConditionType, UIComponentType, UIConfigurationError } from './core/ui/types';
+export { convertUIConfigurationToRules, validateUIConfiguration } from './core/ui/converter';

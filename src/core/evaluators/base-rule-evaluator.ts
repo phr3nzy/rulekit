@@ -1,4 +1,4 @@
-import type { Product, Rule, RuleValue, ComparisonOperator } from '../models/types';
+import type { Entity, Rule, RuleValue, ComparisonOperator } from '../models/types';
 import type { RuleEvaluator } from './types';
 import { ComparisonOperators } from '../models/types';
 
@@ -7,19 +7,19 @@ import { ComparisonOperators } from '../models/types';
  */
 export class BaseRuleEvaluator implements RuleEvaluator {
 	/**
-	 * Evaluates a single product against a rule
+	 * Evaluates a single entity against a rule
 	 */
-	async evaluateRule(product: Product, rule: Rule): Promise<boolean> {
+	async evaluateRule(entity: Entity, rule: Rule): Promise<boolean> {
 		// Handle AND conditions
 		if (rule.and) {
-			return (
-				await Promise.all(rule.and.map(subRule => this.evaluateRule(product, subRule)))
-			).every(Boolean);
+			return (await Promise.all(rule.and.map(subRule => this.evaluateRule(entity, subRule)))).every(
+				Boolean,
+			);
 		}
 
 		// Handle OR conditions
 		if (rule.or) {
-			return (await Promise.all(rule.or.map(subRule => this.evaluateRule(product, subRule)))).some(
+			return (await Promise.all(rule.or.map(subRule => this.evaluateRule(entity, subRule)))).some(
 				Boolean,
 			);
 		}
@@ -27,11 +27,8 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 		// Handle attributes
 		if (rule.attributes) {
 			return Object.entries(rule.attributes).every(([attrKey, attrValue]) => {
-				const productValue = product.attributes[attrKey];
-				return this.evaluateFilter(
-					productValue,
-					attrValue as Record<ComparisonOperator, RuleValue>,
-				);
+				const entityValue = entity.attributes[attrKey];
+				return this.evaluateFilter(entityValue, attrValue as Record<ComparisonOperator, RuleValue>);
 			});
 		}
 
@@ -39,11 +36,8 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 		const attributeEntries = Object.entries(rule).filter(([key]) => key !== 'and' && key !== 'or');
 		if (attributeEntries.length > 0) {
 			return attributeEntries.every(([attrKey, attrValue]) => {
-				const productValue = product.attributes[attrKey];
-				return this.evaluateFilter(
-					productValue,
-					attrValue as Record<ComparisonOperator, RuleValue>,
-				);
+				const entityValue = entity.attributes[attrKey];
+				return this.evaluateFilter(entityValue, attrValue as Record<ComparisonOperator, RuleValue>);
 			});
 		}
 
@@ -52,17 +46,17 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 	}
 
 	/**
-	 * Evaluates multiple products against a single rule
+	 * Evaluates multiple entities against a single rule
 	 */
-	async evaluateRuleBatch(products: Product[], rule: Rule): Promise<boolean[]> {
-		return Promise.all(products.map(product => this.evaluateRule(product, rule)));
+	async evaluateRuleBatch(entities: Entity[], rule: Rule): Promise<boolean[]> {
+		return Promise.all(entities.map(entity => this.evaluateRule(entity, rule)));
 	}
 
 	/**
-	 * Evaluates a single product against multiple rules
+	 * Evaluates a single entity against multiple rules
 	 */
-	async evaluateRules(product: Product, rules: Rule[]): Promise<boolean> {
-		return (await Promise.all(rules.map(rule => this.evaluateRule(product, rule)))).some(Boolean);
+	async evaluateRules(entity: Entity, rules: Rule[]): Promise<boolean> {
+		return (await Promise.all(rules.map(rule => this.evaluateRule(entity, rule)))).some(Boolean);
 	}
 
 	/**
@@ -121,9 +115,13 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 
 		switch (operator) {
 			case 'eq':
-				return value === targetValue;
+				return Array.isArray(targetValue)
+					? targetValue.includes(value as string | number)
+					: value === targetValue;
 			case 'ne':
-				return value !== targetValue;
+				return Array.isArray(targetValue)
+					? !targetValue.includes(value as string | number)
+					: value !== targetValue;
 			case 'gt':
 				return (value as number) > (targetValue as number);
 			case 'gte':

@@ -44,21 +44,12 @@ export type UIFilter = {
 };
 
 /**
- * Source configuration for UI
+ * Generic matching rule type
  */
-export type UISource = {
+export type UIMatchingRule = {
 	name: string;
 	conditions: UICondition[];
 	values?: string[];
-};
-
-/**
- * Recommendation configuration for UI
- */
-export type UIRecommendation = {
-	name: string;
-	conditions: UICondition[];
-	value: string[];
 };
 
 /**
@@ -66,8 +57,11 @@ export type UIRecommendation = {
  */
 export type UIRuleConfiguration = {
 	filters?: UIFilter[];
-	source?: UISource[];
-	recommendations?: UIRecommendation[];
+	matchingFrom?: UIMatchingRule[];
+	matchingTo?: UIMatchingRule[];
+	// Backward compatibility
+	source?: UIMatchingRule[];
+	recommendations?: UIMatchingRule[];
 };
 
 /**

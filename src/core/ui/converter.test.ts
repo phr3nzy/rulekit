@@ -5,7 +5,7 @@ import { convertUIConfigurationToRules, validateUIConfiguration } from './conver
 
 describe('UI Configuration Converter', () => {
 	describe('convertUIConfigurationToRules', () => {
-		it('should convert filters to source rules', () => {
+		it('should convert filters to from rules', () => {
 			const config = {
 				filters: [
 					{
@@ -24,19 +24,19 @@ describe('UI Configuration Converter', () => {
 
 			const result = convertUIConfigurationToRules(config);
 
-			expect(result.sourceRules).toHaveLength(1);
-			expect(result.sourceRules[0]).toEqual({
+			expect(result.fromRules).toHaveLength(1);
+			expect(result.fromRules[0]).toEqual({
 				attributes: {
 					category: {
-						[ComparisonOperators.eq]: 1,
+						[ComparisonOperators.eq]: [1],
 					},
 				},
 			});
 		});
 
-		it('should convert source configuration to source rules', () => {
+		it('should convert matchingFrom configuration to from rules', () => {
 			const config = {
-				source: [
+				matchingFrom: [
 					{
 						name: 'Product',
 						conditions: [
@@ -52,8 +52,8 @@ describe('UI Configuration Converter', () => {
 
 			const result = convertUIConfigurationToRules(config);
 
-			expect(result.sourceRules).toHaveLength(1);
-			expect(result.sourceRules[0]).toEqual({
+			expect(result.fromRules).toHaveLength(1);
+			expect(result.fromRules[0]).toEqual({
 				attributes: {
 					Product: {
 						[ComparisonOperators.eq]: ['Product 1'],
@@ -62,9 +62,9 @@ describe('UI Configuration Converter', () => {
 			});
 		});
 
-		it('should convert recommendations to recommendation rules', () => {
+		it('should convert matchingTo configuration to to rules', () => {
 			const config = {
-				recommendations: [
+				matchingTo: [
 					{
 						name: 'Category',
 						conditions: [
@@ -75,15 +75,15 @@ describe('UI Configuration Converter', () => {
 								max: -1,
 							},
 						],
-						value: ['Category 1', 'Category 2'],
+						values: ['Category 1', 'Category 2'],
 					},
 				],
 			};
 
 			const result = convertUIConfigurationToRules(config);
 
-			expect(result.recommendationRules).toHaveLength(1);
-			expect(result.recommendationRules[0]).toEqual({
+			expect(result.toRules).toHaveLength(1);
+			expect(result.toRules[0]).toEqual({
 				attributes: {
 					Category: {
 						[ComparisonOperators.in]: ['Category 1', 'Category 2'],
@@ -115,9 +115,9 @@ describe('UI Configuration Converter', () => {
 
 			const result = convertUIConfigurationToRules(config);
 
-			expect(result.sourceRules).toHaveLength(1);
-			expect(result.sourceRules[0]).toHaveProperty('and');
-			expect(result.sourceRules[0].and).toHaveLength(2);
+			expect(result.fromRules).toHaveLength(1);
+			expect(result.fromRules[0]).toHaveProperty('and');
+			expect(result.fromRules[0].and).toHaveLength(2);
 		});
 	});
 
@@ -161,9 +161,9 @@ describe('UI Configuration Converter', () => {
 			);
 		});
 
-		it('should throw error if recommendation has no value', () => {
+		it('should throw error if matchingTo has no values', () => {
 			const config = {
-				recommendations: [
+				matchingTo: [
 					{
 						name: 'test',
 						conditions: [
@@ -172,13 +172,13 @@ describe('UI Configuration Converter', () => {
 								type: UIComponentType.SELECT,
 							},
 						],
-						value: [],
+						values: [],
 					},
 				],
 			};
 
 			expect(() => validateUIConfiguration(config)).toThrow(
-				'Recommendation "test" must have at least one value',
+				'To "test" must have at least one value',
 			);
 		});
 	});

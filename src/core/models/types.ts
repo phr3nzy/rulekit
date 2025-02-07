@@ -1,16 +1,16 @@
 import type { DynamicAttributes } from '../attributes/types';
 
 /**
- * Base product type that can be used with rules
+ * Base entity type that can be used with rules
  */
-export type Product = {
+export type Entity = {
 	/**
-	 * Unique identifier for the product
+	 * Unique identifier for the entity
 	 */
 	id: string;
 
 	/**
-	 * Display name of the product
+	 * Display name of the entity
 	 */
 	name: string;
 
@@ -62,21 +62,21 @@ export type Rule = {
 };
 
 /**
- * Cross-selling rule set with source and recommendation rules
+ * Rule set with matching rules
  */
-export type CrossSellingRuleSet = {
-	sourceRules: Rule[];
-	recommendationRules: Rule[];
+export type RuleSet = {
+	fromRules: Rule[];
+	toRules: Rule[];
 };
 
 /**
- * Configuration type for cross-selling rules
+ * Configuration type for rule-based matching
  */
-export type CrossSellingConfig = {
+export type MatchingConfig = {
 	id: string;
 	name: string;
 	description?: string;
-	ruleSet: CrossSellingRuleSet;
+	ruleSet: RuleSet;
 	isActive: boolean;
 	createdAt: Date;
 	updatedAt: Date;

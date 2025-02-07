@@ -2,8 +2,8 @@ import { RuleEngine } from '../services/rule-engine';
 import { UIConditionType, UIComponentType } from './types';
 import { convertUIConfigurationToRules, validateUIConfiguration } from './converter';
 
-// Example products
-const products = [
+// Example entities
+const entities = [
 	{
 		id: '1',
 		name: 'Outdoor Chair',
@@ -24,9 +24,9 @@ const products = [
 	},
 ];
 
-// Example UI configuration (matching the UI shown in screenshots)
+// Example UI configuration using new generic property names
 const uiConfig = {
-	source: [
+	matchingFrom: [
 		{
 			name: 'category',
 			conditions: [
@@ -49,7 +49,7 @@ const uiConfig = {
 			values: ['1500000'],
 		},
 	],
-	recommendations: [
+	matchingTo: [
 		{
 			name: 'category',
 			conditions: [
@@ -58,7 +58,7 @@ const uiConfig = {
 					type: UIComponentType.SELECT,
 				},
 			],
-			value: ['Indoor furniture'],
+			values: ['Indoor furniture'],
 		},
 		{
 			name: 'price',
@@ -69,7 +69,7 @@ const uiConfig = {
 					max: 500000,
 				},
 			],
-			value: ['500000'],
+			values: ['500000'],
 		},
 	],
 };
@@ -80,29 +80,29 @@ async function runExample() {
 		validateUIConfiguration(uiConfig);
 
 		// Convert UI configuration to internal rules
-		const { sourceRules, recommendationRules } = convertUIConfigurationToRules(uiConfig);
+		const { fromRules, toRules } = convertUIConfigurationToRules(uiConfig);
 
-		// Initialize rule engine
-		const ruleEngine = new RuleEngine({ cache: undefined, enableCaching: false });
+		// Initialize rule engine with default configuration
+		const ruleEngine = new RuleEngine();
 
 		// Process the configuration
 		const result = await ruleEngine.processConfig(
 			{
 				id: 'example',
-				name: 'Example Cross-Sell',
+				name: 'Example Rule Matching',
 				ruleSet: {
-					sourceRules,
-					recommendationRules,
+					fromRules,
+					toRules,
 				},
 				isActive: true,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			},
-			products,
+			entities,
 		);
 
-		console.log('Source Products:', result.sourceProducts);
-		console.log('Recommended Products:', result.recommendedProducts);
+		console.log('Matching From:', result.fromEntities);
+		console.log('Matching To:', result.toEntities);
 
 		return result;
 	} catch (error) {

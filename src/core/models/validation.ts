@@ -1,10 +1,4 @@
-import type {
-	Rule,
-	RuleValue,
-	ComparisonOperator,
-	CrossSellingRuleSet,
-	CrossSellingConfig,
-} from './types';
+import type { Rule, RuleValue, ComparisonOperator, RuleSet, MatchingConfig } from './types';
 import { ComparisonOperators } from './types';
 
 export class RuleValidationError extends Error {
@@ -93,28 +87,26 @@ export function validateRule(rule: unknown): asserts rule is Rule {
 	});
 }
 
-export function validateCrossSellingRuleSet(
-	ruleSet: unknown,
-): asserts ruleSet is CrossSellingRuleSet {
+export function validateRuleSet(ruleSet: unknown): asserts ruleSet is RuleSet {
 	if (typeof ruleSet !== 'object' || ruleSet === null) {
 		throw new RuleValidationError('Rule set must be an object');
 	}
 
-	const { sourceRules, recommendationRules } = ruleSet as Record<string, unknown>;
+	const { fromRules, toRules } = ruleSet as Record<string, unknown>;
 
-	if (!Array.isArray(sourceRules) || sourceRules.length === 0) {
-		throw new RuleValidationError('Source rules must be a non-empty array');
+	if (!Array.isArray(fromRules) || fromRules.length === 0) {
+		throw new RuleValidationError('From rules must be a non-empty array');
 	}
 
-	if (!Array.isArray(recommendationRules) || recommendationRules.length === 0) {
-		throw new RuleValidationError('Recommendation rules must be a non-empty array');
+	if (!Array.isArray(toRules) || toRules.length === 0) {
+		throw new RuleValidationError('To rules must be a non-empty array');
 	}
 
-	sourceRules.forEach(rule => validateRule(rule));
-	recommendationRules.forEach(rule => validateRule(rule));
+	fromRules.forEach(rule => validateRule(rule));
+	toRules.forEach(rule => validateRule(rule));
 }
 
-export function validateCrossSellingConfig(config: unknown): asserts config is CrossSellingConfig {
+export function validateMatchingConfig(config: unknown): asserts config is MatchingConfig {
 	if (typeof config !== 'object' || config === null) {
 		throw new RuleValidationError('Config must be an object');
 	}
@@ -136,7 +128,7 @@ export function validateCrossSellingConfig(config: unknown): asserts config is C
 		throw new RuleValidationError('Description must be a non-empty string if provided');
 	}
 
-	validateCrossSellingRuleSet(ruleSet);
+	validateRuleSet(ruleSet);
 
 	if (typeof isActive !== 'boolean') {
 		throw new RuleValidationError('isActive must be a boolean');

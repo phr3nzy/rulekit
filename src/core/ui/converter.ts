@@ -5,8 +5,7 @@ import {
 	type UIRuleConfiguration,
 	type UICondition,
 	type UIFilter,
-	type UISource,
-	type UIRecommendation,
+	type UIMatchingRule,
 	UIConfigurationError,
 	UIComponentType,
 } from './types';
@@ -62,11 +61,9 @@ function convertConditionToFilter(condition: UICondition, value: unknown): BaseF
 		}
 	}
 
-	// For eq/ne/gt/gte/lt/lte operators, use the first value directly instead of an array
+	// For numeric operators, use the first value directly instead of an array
 	if (
-		(operator === ComparisonOperators.eq ||
-			operator === ComparisonOperators.ne ||
-			operator === ComparisonOperators.gt ||
+		(operator === ComparisonOperators.gt ||
 			operator === ComparisonOperators.gte ||
 			operator === ComparisonOperators.lt ||
 			operator === ComparisonOperators.lte) &&
@@ -100,34 +97,18 @@ function convertFiltersToRules(filters: UIFilter[]): Rule[] {
 }
 
 /**
- * Converts UI source configuration to internal rules
+ * Converts UI matching rules to internal rules
  */
-function convertSourceToRules(sources: UISource[]): Rule[] {
-	return sources.map(source => {
-		const rules: Rule[] = source.conditions.map(condition => ({
+function convertMatchingRulesToRules(rules: UIMatchingRule[]): Rule[] {
+	return rules.map(rule => {
+		const ruleConditions: Rule[] = rule.conditions.map(condition => ({
 			attributes: {
-				[source.name]: convertConditionToFilter(condition, source.values ?? null),
+				[rule.name]: convertConditionToFilter(condition, rule.values ?? null),
 			},
 		}));
 
 		// If multiple conditions, combine with AND
-		return rules.length > 1 ? { and: rules } : rules[0];
-	});
-}
-
-/**
- * Converts UI recommendations to internal rules
- */
-function convertRecommendationsToRules(recommendations: UIRecommendation[]): Rule[] {
-	return recommendations.map(recommendation => {
-		const rules: Rule[] = recommendation.conditions.map(condition => ({
-			attributes: {
-				[recommendation.name]: convertConditionToFilter(condition, recommendation.value ?? null),
-			},
-		}));
-
-		// If multiple conditions, combine with AND
-		return rules.length > 1 ? { and: rules } : rules[0];
+		return ruleConditions.length > 1 ? { and: ruleConditions } : ruleConditions[0];
 	});
 }
 
@@ -135,30 +116,36 @@ function convertRecommendationsToRules(recommendations: UIRecommendation[]): Rul
  * Converts a UI configuration to internal rules
  */
 export function convertUIConfigurationToRules(config: UIRuleConfiguration): {
-	sourceRules: Rule[];
-	recommendationRules: Rule[];
+	fromRules: Rule[];
+	toRules: Rule[];
 } {
-	const sourceRules: Rule[] = [];
-	const recommendationRules: Rule[] = [];
+	const fromRules: Rule[] = [];
+	const toRules: Rule[] = [];
 
 	// Convert filters if present
 	if (config.filters?.length) {
-		sourceRules.push(...convertFiltersToRules(config.filters));
+		fromRules.push(...convertFiltersToRules(config.filters));
 	}
 
-	// Convert source rules if present
+	// Convert matching rules
+	if (config.matchingFrom?.length) {
+		fromRules.push(...convertMatchingRulesToRules(config.matchingFrom));
+	}
+	if (config.matchingTo?.length) {
+		toRules.push(...convertMatchingRulesToRules(config.matchingTo));
+	}
+
+	// Support backward compatibility
 	if (config.source?.length) {
-		sourceRules.push(...convertSourceToRules(config.source));
+		fromRules.push(...convertMatchingRulesToRules(config.source));
 	}
-
-	// Convert recommendation rules if present
 	if (config.recommendations?.length) {
-		recommendationRules.push(...convertRecommendationsToRules(config.recommendations));
+		toRules.push(...convertMatchingRulesToRules(config.recommendations));
 	}
 
 	return {
-		sourceRules,
-		recommendationRules,
+		fromRules,
+		toRules,
 	};
 }
 
@@ -167,7 +154,13 @@ export function convertUIConfigurationToRules(config: UIRuleConfiguration): {
  */
 export function validateUIConfiguration(config: UIRuleConfiguration): void {
 	// Ensure at least one rule type is present
-	if (!config.filters?.length && !config.source?.length && !config.recommendations?.length) {
+	if (
+		!config.filters?.length &&
+		!config.matchingFrom?.length &&
+		!config.matchingTo?.length &&
+		!config.source?.length &&
+		!config.recommendations?.length
+	) {
 		throw new UIConfigurationError('Configuration must contain at least one rule type');
 	}
 
@@ -181,30 +174,32 @@ export function validateUIConfiguration(config: UIRuleConfiguration): void {
 		}
 	});
 
-	// Validate source rules if present
-	config.source?.forEach(source => {
-		if (!source.name) {
-			throw new UIConfigurationError('Source must have a name');
-		}
-		if (!source.conditions?.length) {
-			throw new UIConfigurationError(`Source "${source.name}" must have at least one condition`);
-		}
-	});
+	// Validate matching rules
+	const validateMatchingRules = (rules: UIMatchingRule[], type: string) => {
+		rules.forEach(rule => {
+			if (!rule.name) {
+				throw new UIConfigurationError(`${type} must have a name`);
+			}
+			if (!rule.conditions?.length) {
+				throw new UIConfigurationError(`${type} "${rule.name}" must have at least one condition`);
+			}
+			if (!rule.values?.length) {
+				throw new UIConfigurationError(`${type} "${rule.name}" must have at least one value`);
+			}
+		});
+	};
 
-	// Validate recommendation rules if present
-	config.recommendations?.forEach(recommendation => {
-		if (!recommendation.name) {
-			throw new UIConfigurationError('Recommendation must have a name');
-		}
-		if (!recommendation.conditions?.length) {
-			throw new UIConfigurationError(
-				`Recommendation "${recommendation.name}" must have at least one condition`,
-			);
-		}
-		if (!recommendation.value?.length) {
-			throw new UIConfigurationError(
-				`Recommendation "${recommendation.name}" must have at least one value`,
-			);
-		}
-	});
+	// Validate all rule types
+	if (config.matchingFrom?.length) {
+		validateMatchingRules(config.matchingFrom, 'From');
+	}
+	if (config.matchingTo?.length) {
+		validateMatchingRules(config.matchingTo, 'To');
+	}
+	if (config.source?.length) {
+		validateMatchingRules(config.source, 'From');
+	}
+	if (config.recommendations?.length) {
+		validateMatchingRules(config.recommendations, 'To');
+	}
 }

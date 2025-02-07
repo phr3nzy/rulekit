@@ -6,8 +6,8 @@ describe('Package exports', () => {
 		expect(pkg).toHaveProperty('RuleEngine');
 		expect(pkg).toHaveProperty('ComparisonOperators');
 		expect(pkg).toHaveProperty('validateRule');
-		expect(pkg).toHaveProperty('validateCrossSellingRuleSet');
-		expect(pkg).toHaveProperty('validateCrossSellingConfig');
+		expect(pkg).toHaveProperty('validateRuleSet');
+		expect(pkg).toHaveProperty('validateMatchingConfig');
 		expect(pkg).toHaveProperty('RuleValidationError');
 	});
 
@@ -24,9 +24,9 @@ describe('Package exports', () => {
 		});
 	});
 
-	it('should export Product type with dynamic attributes support', () => {
-		// Type checking test - this will fail compilation if Product type doesn't support dynamic attributes
-		const validProduct: pkg.Product = {
+	it('should export Entity type with dynamic attributes support', () => {
+		// Type checking test - this will fail compilation if Entity type doesn't support dynamic attributes
+		const validEntity: pkg.Entity = {
 			id: '1',
 			name: 'Test Product',
 			attributes: {
@@ -35,6 +35,6 @@ describe('Package exports', () => {
 				__validated: true,
 			},
 		};
-		expect(validProduct.attributes.__validated).toBe(true);
+		expect(validEntity.attributes.__validated).toBe(true);
 	});
 });
