@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-02-07
+
+### Changed
+
+- **BREAKING**: Converted all operations to synchronous for major performance improvements:
+  - Removed async/await from all methods
+  - Optimized rule evaluation engine
+  - Improved batch processing performance
+  - Updated all method signatures to be synchronous
+  - Simplified internal implementations
+
+### Added
+
+- Performance optimizations:
+  - Pre-allocated result arrays
+  - Removed unnecessary object creation
+  - Optimized Set usage for O(1) lookups
+  - Smart batch size management based on rule complexity
+  - Fast paths for common operations (eq, numeric comparisons)
+  - Optimized operator validation with static Set
+
+### Improved
+
+- Test coverage improvements:
+  - Added comprehensive edge case testing
+  - Improved error handling coverage
+  - Added legacy rule validation tests
+  - Expanded numeric conversion tests
+  - Added null value handling tests
+
+### Performance
+
+- Benchmark results:
+  - Real-world entity matching (100 entities): 54,102 ops/sec
+  - Complex nested rules (1000 entities): 2,276 ops/sec
+  - Large dataset processing (10000 entities): 247 ops/sec
+  - Matching with multiple entities: 2,392 ops/sec
+
 ## [1.1.1] - 2025-02-07
 
 ### Added
@@ -103,6 +141,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code style enforcement
 - Automated testing and CI
 
+[2.0.0]: https://github.com/phr3nzy/rulekit/releases/tag/v2.0.0
+[1.1.1]: https://github.com/phr3nzy/rulekit/releases/tag/v1.1.1
+[1.1.0]: https://github.com/phr3nzy/rulekit/releases/tag/v1.1.0
+[1.0.3]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.3
 [1.0.2]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.2
 [1.0.1]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.1
 [1.0.0]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.0
