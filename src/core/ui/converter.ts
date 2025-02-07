@@ -11,7 +11,27 @@ import {
 } from './types';
 
 /**
- * Maps UI condition types to internal comparison operators
+ * Maps UI condition types to internal comparison operators based on condition type and values.
+ * Handles special cases for numeric comparisons and different UI component types.
+ *
+ * @param {UICondition} condition - The UI condition to map
+ * @returns {ComparisonOperator} The corresponding internal comparison operator
+ *
+ * @remarks
+ * Special cases:
+ * - TEXT components with max value use 'lte' operator
+ * - TEXT components with min value use 'gte' operator
+ * - Other conditions use a predefined operator mapping
+ *
+ * @example
+ * ```typescript
+ * const condition: UICondition = {
+ *   type: UIComponentType.TEXT,
+ *   max: 100,
+ *   condition: UIConditionType.IS
+ * };
+ * const operator = getOperator(condition); // Returns 'lte'
+ * ```
  */
 function getOperator(condition: UICondition): ComparisonOperator {
 	// Use lte for price comparisons with max value
@@ -37,7 +57,29 @@ function getOperator(condition: UICondition): ComparisonOperator {
 }
 
 /**
- * Converts a UI condition to an internal base filter
+ * Converts a UI condition and its value to an internal base filter format.
+ * Handles type conversions and special cases for different value types.
+ *
+ * @param {UICondition} condition - The UI condition to convert
+ * @param {unknown} value - The value to apply in the filter
+ * @returns {BaseFilter} The converted filter
+ * @throws {UIConfigurationError} If condition type is unknown
+ *
+ * @remarks
+ * - Automatically converts single values to arrays
+ * - Handles numeric string conversion for price comparisons
+ * - Special handling for numeric comparison operators
+ *
+ * @example
+ * ```typescript
+ * const condition: UICondition = {
+ *   type: UIComponentType.TEXT,
+ *   condition: UIConditionType.IS,
+ *   max: 100
+ * };
+ * const filter = convertConditionToFilter(condition, 50);
+ * // Returns: { lte: 50 }
+ * ```
  */
 function convertConditionToFilter(condition: UICondition, value: unknown): BaseFilter {
 	const operator = getOperator(condition);
@@ -81,7 +123,29 @@ function convertConditionToFilter(condition: UICondition, value: unknown): BaseF
 }
 
 /**
- * Converts UI filters to internal rules
+ * Converts an array of UI filters to internal rule format.
+ * Each filter's conditions are combined into a rule structure.
+ *
+ * @param {UIFilter[]} filters - Array of UI filters to convert
+ * @returns {Rule[]} Array of converted internal rules
+ *
+ * @remarks
+ * - Multiple conditions within a filter are combined with AND logic
+ * - Each condition creates a rule with attributes matching the filter name
+ * - Handles both single and multiple condition cases
+ *
+ * @example
+ * ```typescript
+ * const filters: UIFilter[] = [{
+ *   name: 'price',
+ *   conditions: [{
+ *     type: UIComponentType.TEXT,
+ *     condition: UIConditionType.IS,
+ *     max: 100
+ *   }]
+ * }];
+ * const rules = convertFiltersToRules(filters);
+ * ```
  */
 function convertFiltersToRules(filters: UIFilter[]): Rule[] {
 	return filters.map(filter => {
@@ -97,7 +161,29 @@ function convertFiltersToRules(filters: UIFilter[]): Rule[] {
 }
 
 /**
- * Converts UI matching rules to internal rules
+ * Converts UI matching rules to internal rule format.
+ * Handles both single and multiple condition cases within each rule.
+ *
+ * @param {UIMatchingRule[]} rules - Array of UI matching rules to convert
+ * @returns {Rule[]} Array of converted internal rules
+ *
+ * @remarks
+ * - Multiple conditions within a rule are combined with AND logic
+ * - Each condition creates a rule with attributes matching the rule name
+ * - Uses rule values if provided
+ *
+ * @example
+ * ```typescript
+ * const matchingRules: UIMatchingRule[] = [{
+ *   name: 'role',
+ *   conditions: [{
+ *     type: UIComponentType.SELECT,
+ *     condition: UIConditionType.IS
+ *   }],
+ *   values: ['admin']
+ * }];
+ * const rules = convertMatchingRulesToRules(matchingRules);
+ * ```
  */
 function convertMatchingRulesToRules(rules: UIMatchingRule[]): Rule[] {
 	return rules.map(rule => {
@@ -113,7 +199,35 @@ function convertMatchingRulesToRules(rules: UIMatchingRule[]): Rule[] {
 }
 
 /**
- * Converts a UI configuration to internal rules
+ * Converts a complete UI configuration to internal rule format.
+ * Processes all rule types and combines them into from/to rule sets.
+ *
+ * @param {UIRuleConfiguration} config - The UI configuration to convert
+ * @returns {{ fromRules: Rule[]; toRules: Rule[] }} Converted rule sets
+ *
+ * @remarks
+ * Processes multiple rule types:
+ * - Filters (added to fromRules)
+ * - Matching From rules
+ * - Matching To rules
+ * - Legacy source rules (added to fromRules)
+ * - Legacy recommendation rules (added to toRules)
+ *
+ * @example
+ * ```typescript
+ * const config: UIRuleConfiguration = {
+ *   filters: [{
+ *     name: 'price',
+ *     conditions: [{ type: UIComponentType.TEXT, condition: UIConditionType.IS, max: 100 }]
+ *   }],
+ *   matchingFrom: [{
+ *     name: 'role',
+ *     conditions: [{ type: UIComponentType.SELECT, condition: UIConditionType.IS }],
+ *     values: ['admin']
+ *   }]
+ * };
+ * const { fromRules, toRules } = convertUIConfigurationToRules(config);
+ * ```
  */
 export function convertUIConfigurationToRules(config: UIRuleConfiguration): {
 	fromRules: Rule[];
@@ -150,7 +264,37 @@ export function convertUIConfigurationToRules(config: UIRuleConfiguration): {
 }
 
 /**
- * Validates a UI configuration
+ * Validates a UI configuration for correctness and completeness.
+ * Checks all required fields and relationships between rules.
+ *
+ * @param {UIRuleConfiguration} config - The configuration to validate
+ * @throws {UIConfigurationError} If validation fails
+ *
+ * @remarks
+ * Validates:
+ * - Presence of at least one rule type
+ * - Filter names and conditions
+ * - Matching rule names, conditions, and values
+ * - Legacy rule formats
+ *
+ * @example
+ * ```typescript
+ * const config: UIRuleConfiguration = {
+ *   filters: [{
+ *     name: 'price',
+ *     conditions: [{ type: UIComponentType.TEXT, condition: UIConditionType.IS, max: 100 }]
+ *   }]
+ * };
+ *
+ * try {
+ *   validateUIConfiguration(config);
+ *   console.log('Configuration is valid');
+ * } catch (error) {
+ *   if (error instanceof UIConfigurationError) {
+ *     console.error('Invalid configuration:', error.message);
+ *   }
+ * }
+ * ```
  */
 export function validateUIConfiguration(config: UIRuleConfiguration): void {
 	// Ensure at least one rule type is present

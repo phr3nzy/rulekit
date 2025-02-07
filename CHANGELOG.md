@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-02-07
+
+### Added
+
+- Improved documentation:
+  - Added comprehensive JSDoc comments
+  - Updated README with more detailed examples
+  - Added better type documentation
+  - Updated terminology to be more generic
+  - Added performance benchmark results
+  - Added detailed API documentation
+  - Improved code examples with TypeScript types
+
 ## [1.1.0] - 2025-02-07
 
 ### Changed

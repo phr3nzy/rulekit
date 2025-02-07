@@ -1,10 +1,34 @@
 import type { Cache, CacheConfig } from './types';
 
+/**
+ * Internal interface representing a cached item with its metadata.
+ *
+ * @interface CacheEntry
+ * @template T - Type of the cached value
+ *
+ * @property {T} value - The actual cached value
+ * @property {number} [expiresAt] - Optional timestamp when entry expires
+ *
+ * @internal
+ */
 interface CacheEntry<T> {
 	value: T;
 	expiresAt?: number;
 }
 
+/**
+ * Internal interface for tracking cache statistics.
+ *
+ * @interface CacheStats
+ *
+ * @property {number} hits - Number of successful cache retrievals
+ * @property {number} misses - Number of failed cache retrievals
+ * @property {number} keys - Current number of cached items
+ * @property {number} ksize - Total size of all keys in bytes
+ * @property {number} vsize - Total size of all values in bytes
+ *
+ * @internal
+ */
 interface CacheStats {
 	hits: number;
 	misses: number;
@@ -14,7 +38,34 @@ interface CacheStats {
 }
 
 /**
- * Memory-based implementation of Cache interface
+ * In-memory implementation of the Cache interface.
+ * Provides fast, memory-based caching with optional TTL and statistics.
+ *
+ * @class MemoryCache
+ * @implements {Cache}
+ *
+ * @remarks
+ * Features:
+ * - In-memory key-value storage
+ * - Automatic TTL expiration
+ * - Optional statistics tracking
+ * - Maximum items limit
+ * - Periodic cleanup of expired items
+ *
+ * @example
+ * ```typescript
+ * const cache = new MemoryCache({
+ *   defaultTTLSeconds: 3600,
+ *   maxItems: 1000,
+ *   enableStats: true
+ * });
+ *
+ * // Cache some data
+ * await cache.set('key', { data: 'value' });
+ *
+ * // Retrieve cached data
+ * const value = await cache.get('key');
+ * ```
  */
 export class MemoryCache implements Cache {
 	private cache: Map<string, CacheEntry<unknown>>;
@@ -53,7 +104,28 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Gets a value from cache
+	 * Retrieves a value from the cache by its key.
+	 * Handles TTL expiration and statistics tracking.
+	 *
+	 * @template T - Type of the cached value
+	 * @param {string} key - Key to retrieve
+	 * @returns {Promise<T | null>} Cached value or null if not found/expired
+	 *
+	 * @remarks
+	 * - Checks for entry existence
+	 * - Verifies TTL expiration
+	 * - Updates hit/miss statistics
+	 * - Removes expired entries
+	 *
+	 * @example
+	 * ```typescript
+	 * const value = await cache.get<UserData>('user:123');
+	 * if (value) {
+	 *   console.log('Cache hit:', value);
+	 * } else {
+	 *   console.log('Cache miss');
+	 * }
+	 * ```
 	 */
 	async get<T>(key: string): Promise<T | null> {
 		const entry = this.cache.get(key) as CacheEntry<T> | undefined;
@@ -74,7 +146,28 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Sets a value in cache
+	 * Stores a value in the cache with optional TTL.
+	 * Handles maximum items limit and statistics updates.
+	 *
+	 * @template T - Type of the value to cache
+	 * @param {string} key - Key to store under
+	 * @param {T} value - Value to store
+	 * @param {number} [ttlSeconds] - Optional TTL override
+	 *
+	 * @remarks
+	 * - Enforces maximum items limit
+	 * - Removes oldest entry if limit reached
+	 * - Sets expiration based on TTL
+	 * - Updates statistics
+	 *
+	 * @example
+	 * ```typescript
+	 * // Cache with default TTL
+	 * await cache.set('key', data);
+	 *
+	 * // Cache with custom TTL
+	 * await cache.set('key', data, 1800); // 30 minutes
+	 * ```
 	 */
 	async set<T>(key: string, value: T, ttlSeconds?: number): Promise<void> {
 		// Check max items limit
@@ -102,7 +195,19 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Deletes a value from cache
+	 * Removes a value from the cache.
+	 * Updates statistics if enabled.
+	 *
+	 * @param {string} key - Key to delete
+	 *
+	 * @remarks
+	 * - Safely handles non-existent keys
+	 * - Updates statistics after deletion
+	 *
+	 * @example
+	 * ```typescript
+	 * await cache.delete('old-key');
+	 * ```
 	 */
 	async delete(key: string): Promise<void> {
 		this.cache.delete(key);
@@ -112,7 +217,18 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Clears all values from cache
+	 * Removes all values from the cache.
+	 * Resets statistics if enabled.
+	 *
+	 * @remarks
+	 * - Clears all entries
+	 * - Resets statistics counters
+	 * - Maintains configuration
+	 *
+	 * @example
+	 * ```typescript
+	 * await cache.clear();
+	 * ```
 	 */
 	async clear(): Promise<void> {
 		this.cache.clear();
@@ -122,14 +238,41 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Gets cache statistics
+	 * Retrieves current cache statistics if enabled.
+	 * Returns null if statistics are disabled.
+	 *
+	 * @returns {Promise<CacheStats | null>} Current statistics or null
+	 *
+	 * @remarks
+	 * Statistics include:
+	 * - Cache hits and misses
+	 * - Number of cached items
+	 * - Memory usage metrics
+	 *
+	 * @example
+	 * ```typescript
+	 * const stats = await cache.getStats();
+	 * if (stats) {
+	 *   const hitRate = stats.hits / (stats.hits + stats.misses);
+	 *   console.log(`Hit rate: ${hitRate * 100}%`);
+	 * }
+	 * ```
 	 */
 	async getStats(): Promise<CacheStats | null> {
 		return this.config.enableStats ? this.stats : null;
 	}
 
 	/**
-	 * Cleans up expired entries
+	 * Internal method to remove expired cache entries.
+	 * Called periodically based on TTL settings.
+	 *
+	 * @private
+	 *
+	 * @remarks
+	 * - Checks all entries for expiration
+	 * - Removes expired entries
+	 * - Updates statistics
+	 * - Runs at most every minute
 	 */
 	private cleanup(): void {
 		const now = Date.now();
@@ -145,7 +288,16 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Updates cache statistics
+	 * Internal method to update cache statistics.
+	 * Calculates current memory usage and item counts.
+	 *
+	 * @private
+	 *
+	 * @remarks
+	 * Updates:
+	 * - Number of cached items
+	 * - Total key size in bytes
+	 * - Total value size in bytes
 	 */
 	private updateStats(): void {
 		this.stats.keys = this.cache.size;
@@ -157,7 +309,16 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Resets cache statistics
+	 * Internal method to reset all statistics counters.
+	 * Called when clearing cache or resetting stats.
+	 *
+	 * @private
+	 *
+	 * @remarks
+	 * Resets:
+	 * - Hit/miss counters
+	 * - Item counts
+	 * - Size measurements
 	 */
 	private resetStats(): void {
 		this.stats = {
@@ -170,7 +331,20 @@ export class MemoryCache implements Cache {
 	}
 
 	/**
-	 * Stops the cleanup interval
+	 * Cleans up resources used by the cache.
+	 * Should be called when cache is no longer needed.
+	 *
+	 * @remarks
+	 * - Stops the cleanup interval
+	 * - Prevents memory leaks
+	 * - Should be called before dereferencing cache
+	 *
+	 * @example
+	 * ```typescript
+	 * const cache = new MemoryCache();
+	 * // ... use cache ...
+	 * cache.dispose(); // Clean up when done
+	 * ```
 	 */
 	dispose(): void {
 		if (this.cleanupInterval) {
