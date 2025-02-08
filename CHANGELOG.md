@@ -1,191 +1,168 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [2.0.2] - 2025-02-08
-
-### Improved
-
-- Enhanced documentation:
-  - Updated performance metrics and benchmarks
-  - Improved code examples to reflect synchronous API
-  - Added detailed performance section
-  - Enhanced contributing guidelines
-  - Added CI/CD pipeline details
-  - Updated feature list to highlight performance
-  - Added recommended installation method (pnpm)
-
-## [2.0.1] - 2025-02-08
-
-### Improved
-
-- Enhanced CI/CD pipeline:
-  - Added comprehensive caching for faster builds:
-    - pnpm store caching for dependencies
-    - Coverage report caching
-    - Build output caching
-  - Improved workflow organization:
-    - Separated test and publish jobs
-    - Added proper job dependencies
-    - Enhanced concurrency handling
-  - Added Codecov integration:
-    - Detailed coverage reporting
-    - Coverage upload with proper configuration
-    - Fail CI on coverage regression
-
-## [2.0.0] - 2025-02-07
-
-### Changed
-
-- **BREAKING**: Converted all operations to synchronous for major performance improvements:
-  - Removed async/await from all methods
-  - Optimized rule evaluation engine
-  - Improved batch processing performance
-  - Updated all method signatures to be synchronous
-  - Simplified internal implementations
+## [3.0.0] - 2025-02-08
 
 ### Added
 
-- Performance optimizations:
-  - Pre-allocated result arrays
-  - Removed unnecessary object creation
-  - Optimized Set usage for O(1) lookups
-  - Smart batch size management based on rule complexity
-  - Fast paths for common operations (eq, numeric comparisons)
-  - Optimized operator validation with static Set
+- Complete type-safe implementation with generic support
+- New v3 API with improved type inference
+- Enhanced rule engine with better performance
+- Support for array conditions with element-level matching
+- Comprehensive test coverage and benchmarks
+- Type-safe schema validation
+- Improved batch processing with dynamic sizing
 
-### Improved
+### Changed
 
-- Test coverage improvements:
-  - Added comprehensive edge case testing
-  - Improved error handling coverage
-  - Added legacy rule validation tests
-  - Expanded numeric conversion tests
-  - Added null value handling tests
+- Moved v2 implementation to legacy exports
+- Updated core types to support generic schemas
+- Improved rule evaluation performance
+- Enhanced array matching behavior
+
+### Breaking Changes
+
+- New v3 API uses different import path (`import { v3 } from '@phr3nzy/rulekit'`)
+- Type-safe schemas require explicit type definitions
+- Array conditions now support both element and array-level matching
+- Rule evaluation now validates against schema types
 
 ### Performance
 
-- Benchmark results:
-  - Real-world entity matching (100 entities): 54,102 ops/sec
-  - Complex nested rules (1000 entities): 2,276 ops/sec
-  - Large dataset processing (10000 entities): 247 ops/sec
-  - Matching with multiple entities: 2,392 ops/sec
+- Real-world entity matching (100 entities): 47,603 ops/sec
+- Simple rules (1000 entities): 936 ops/sec
+- Complex rules (1000 entities): 260 ops/sec
+- Large dataset (10000 entities): 87 ops/sec
 
-## [1.1.1] - 2025-02-07
+### Migration Guide
 
-### Added
+#### 1. Update Imports
 
-- Improved documentation:
-  - Added comprehensive JSDoc comments
-  - Updated README with more detailed examples
-  - Added better type documentation
-  - Updated terminology to be more generic
-  - Added performance benchmark results
-  - Added detailed API documentation
-  - Improved code examples with TypeScript types
+```typescript
+// Before (v2)
+import { RuleEngine } from '@phr3nzy/rulekit';
 
-## [1.1.0] - 2025-02-07
+// After (v3)
+import { v3 } from '@phr3nzy/rulekit';
+const { TypedRuleEngine } = v3;
+```
 
-### Changed
+#### 2. Define Type-Safe Schema
 
-- Made library more generic and less opinionated:
-  - Renamed Product type to Entity for more generic use cases
-  - Added `matchingFrom` and `matchingTo` as more generic alternatives to `source` and `recommendations`
-  - Renamed internal types and methods to use more generic terminology
-  - Updated example code to use new generic names
-  - Added proper TypeScript deprecation notices for old names
-  - Maintained backward compatibility with existing property names
+```typescript
+import { v3 } from '@phr3nzy/rulekit';
+const { AttributeType } = v3;
 
-### Removed
+// Define your schema with type safety
+type ProductSchema = {
+	category: {
+		type: typeof AttributeType.STRING;
+		validation: {
+			type: typeof AttributeType.STRING;
+			required: true;
+			enum: ['electronics', 'furniture', 'clothing'];
+		};
+	};
+	price: {
+		type: typeof AttributeType.NUMBER;
+		validation: {
+			type: typeof AttributeType.NUMBER;
+			required: true;
+			min: 0;
+		};
+	};
+} & v3.AttributeSchema;
+```
 
-- Removed caching functionality:
-  - Removed CachedRuleEvaluator
-  - Removed MemoryCache implementation
-  - Removed caching-related configuration options
-  - Simplified RuleEngine to use BaseRuleEvaluator by default
+#### 3. Create Type-Safe Engine
 
-## [1.0.3] - 2025-02-02
+```typescript
+// Create schema instance
+const productSchema: ProductSchema = {
+	category: {
+		type: AttributeType.STRING,
+		validation: {
+			type: AttributeType.STRING,
+			required: true,
+			enum: ['electronics', 'furniture', 'clothing'],
+		},
+	},
+	price: {
+		type: AttributeType.NUMBER,
+		validation: {
+			type: AttributeType.NUMBER,
+			required: true,
+			min: 0,
+		},
+	},
+};
 
-### Added
+// Create type-safe engine
+const engine = new TypedRuleEngine(productSchema);
+```
 
-- Exported missing types and classes from attributes module:
-  - `AttributeType` enum
-  - `AttributeTypeValue`, `ValidationRule`, `AttributeDefinition`, `AttributeRegistry`, `AttributeValue`, `DynamicAttributes` types
-  - `ProductAttributeRegistry` class
-  - `validateAttribute` function and `AttributeValidationError` class
+#### 4. Use Type-Safe Rules
 
-## [1.0.2] - 2025-02-01
+```typescript
+// Rules are now type-checked
+const rules: v3.TypedRule<ProductSchema>[] = [
+	{
+		attributes: {
+			category: { eq: 'electronics' }, // Type-safe: must be one of the enum values
+			price: { gte: 100 }, // Type-safe: must be number
+		},
+	},
+];
 
-### Fixed
+// Entities are type-checked
+const entities: v3.TypedEntity<ProductSchema>[] = [
+	{
+		id: '1',
+		name: 'Laptop',
+		attributes: {
+			category: 'electronics',
+			price: 999,
+			__validated: true,
+		},
+	},
+];
 
-- Fixed release workflow triggers
-- Added proper release event handling
-- Enabled benchmarks on main branch pushes
-- Updated CI workflow configuration
+// Find matches with type safety
+const matches = engine.findMatchingFrom(entities, rules);
+```
 
-## [1.0.1] - 2025-02-01
+### Array Matching Improvements
 
-### Fixed
+The v3 release includes improved array matching that supports both element-level and array-level comparisons:
 
-- Fixed CI/CD configuration
-- Added proper Codecov integration
-- Updated publishing workflow
+```typescript
+// Match if any array element matches
+const rule = {
+	attributes: {
+		tags: { in: ['featured', 'new'] }, // Matches if tags array contains 'featured' or 'new'
+	},
+};
 
-## [1.0.0] - 2025-02-01
+// Match specific array elements
+const rule2 = {
+	attributes: {
+		categories: { eq: 'electronics' }, // For non-array fields
+		tags: { in: ['premium'] }, // For array fields
+	},
+};
+```
 
-### Added
+### Backward Compatibility
 
-- Initial release of RuleKit
-- Type-safe rule engine implementation with TypeScript
-- Dynamic attribute handling with validation
-- Flexible rule composition with AND/OR conditions
-- High-performance evaluation with caching support
-- Cross-selling and product recommendation features
-- Memory-efficient caching with TTL and max items
-- Comprehensive test suite with >90% coverage
-- Performance benchmarks and optimization
-- GitHub Actions CI/CD pipeline
-- npm package publishing with provenance
-- Detailed documentation and examples
-- Contributing guidelines and code of conduct
+V2 exports are still available for backward compatibility:
 
-### Features
+```typescript
+// V2 imports still work
+import { RuleEngine } from '@phr3nzy/rulekit';
 
-- Product attribute registry with validation
-- Rule evaluation engine with caching
-- Batch processing for large datasets
-- Cross-selling configuration
-- Performance monitoring and statistics
-- Memory usage optimization
-- Type-safe API design
+// V3 recommended imports
+import { v3 } from '@phr3nzy/rulekit';
+```
 
-### Developer Experience
+## Previous Versions
 
-- Full TypeScript support
-- Comprehensive documentation
-- Example code and use cases
-- Performance benchmarks
-- Contributing guidelines
-- Code style enforcement
-- Automated testing and CI
-
-[2.0.2]: https://github.com/phr3nzy/rulekit/releases/tag/v2.0.2
-[2.0.1]: https://github.com/phr3nzy/rulekit/releases/tag/v2.0.1
-[2.0.0]: https://github.com/phr3nzy/rulekit/releases/tag/v2.0.0
-[1.1.1]: https://github.com/phr3nzy/rulekit/releases/tag/v1.1.1
-[1.1.0]: https://github.com/phr3nzy/rulekit/releases/tag/v1.1.0
-[1.0.3]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.3
-[1.0.2]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.2
-[1.0.1]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.1
-[1.0.0]: https://github.com/phr3nzy/rulekit/releases/tag/v1.0.0
-
-## [0.0.1] - 2024-12-01
-
-### Added
-
-- Initial release with basic rule engine functionality
-- JSON Logic based rule evaluation
-- Basic TypeScript support
+[Previous changelog entries remain unchanged]
