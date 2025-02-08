@@ -1,12 +1,78 @@
 name: Publish Package to npm
+
 on:
   release:
     types: [published, edited]
 
+# Prevent multiple releases from running simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  publish:
+  test:
     runs-on: ubuntu-latest
-    # Remove the main branch check since we want this to run on releases
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      # Cache dependencies
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # Cache test coverage
+      - name: Cache coverage
+        uses: actions/cache@v4
+        with:
+          path: ./coverage
+          key: ${{ runner.os }}-coverage-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-
+
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          directory: ./coverage
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -28,6 +94,29 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
+      # Cache dependencies
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # Cache build output
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: ./dist
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
       - name: Verify package version
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -39,9 +128,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-
-      - name: Run tests
-        run: pnpm test
 
       - name: Run build
         run: pnpm build
