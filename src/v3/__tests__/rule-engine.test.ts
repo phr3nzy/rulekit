@@ -253,4 +253,146 @@ describe('TypedRuleEngine', () => {
 			expect(matches[0].id).toBe('2');
 		});
 	});
+
+	describe('numeric comparisons', () => {
+		const engine = new TypedRuleEngine(productSchema);
+		const entities = [
+			createProduct('1', 'electronics', 100, true),
+			createProduct('2', 'electronics', 200, true),
+			createProduct('3', 'electronics', 300, true),
+		];
+
+		it('handles gt operator', () => {
+			const rules = [{ attributes: { price: { gt: 150 } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(2);
+			expect(matches.map(m => m.id)).toEqual(['2', '3']);
+		});
+
+		it('handles gte operator', () => {
+			const rules = [{ attributes: { price: { gte: 200 } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(2);
+			expect(matches.map(m => m.id)).toEqual(['2', '3']);
+		});
+
+		it('handles lt operator', () => {
+			const rules = [{ attributes: { price: { lt: 250 } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(2);
+			expect(matches.map(m => m.id)).toEqual(['1', '2']);
+		});
+
+		it('handles lte operator', () => {
+			const rules = [{ attributes: { price: { lte: 200 } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(2);
+			expect(matches.map(m => m.id)).toEqual(['1', '2']);
+		});
+	});
+
+	describe('array operations', () => {
+		const engine = new TypedRuleEngine(productSchema);
+		const entities = [
+			createProduct('1', 'electronics', 100, true, ['new', 'featured']),
+			createProduct('2', 'electronics', 200, true, ['sale']),
+			createProduct('3', 'electronics', 300, true, ['clearance']),
+		];
+
+		it('handles notIn operator with arrays', () => {
+			const rules = [{ attributes: { tags: { notIn: ['sale', 'clearance'] } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(1);
+			expect(matches[0].id).toBe('1');
+		});
+
+		it('handles invalid operator', () => {
+			const rules = [{ attributes: { tags: { invalid: ['test'] } as any } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(0);
+		});
+
+		it('handles array values with non-array target for in/notIn operators', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, ['electronics', 'gadgets']),
+				createProduct('2', 'electronics', 200, true, ['furniture', 'home']),
+			];
+
+			// Test 'in' operator with non-array target
+			const inRules = [{ attributes: { tags: { in: 'electronics' as any } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(0);
+
+			// Test 'notIn' operator with non-array target
+			const notInRules = [{ attributes: { tags: { notIn: 'electronics' as any } } }];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(0);
+		});
+	});
+
+	describe('batch processing', () => {
+		const engine = new TypedRuleEngine(productSchema, { maxBatchSize: 10 });
+
+		it('handles complex rules with batch size adjustments', () => {
+			// Create a simpler set of complex rules
+			const complexRules = [
+				{
+					or: [
+						{
+							and: [
+								{ attributes: { price: { gte: 0 } } },
+								{ attributes: { price: { lt: 100 } } },
+								{ attributes: { category: { eq: 'electronics' } } },
+							],
+						},
+						{
+							and: [
+								{ attributes: { price: { gte: 100 } } },
+								{ attributes: { price: { lt: 200 } } },
+								{ attributes: { category: { eq: 'furniture' } } },
+							],
+						},
+					],
+				},
+				{
+					or: [
+						{
+							and: [
+								{ attributes: { price: { gte: 200 } } },
+								{ attributes: { price: { lt: 300 } } },
+								{ attributes: { category: { eq: 'electronics' } } },
+							],
+						},
+						{
+							and: [
+								{ attributes: { price: { gte: 300 } } },
+								{ attributes: { price: { lt: 400 } } },
+								{ attributes: { category: { eq: 'furniture' } } },
+							],
+						},
+					],
+				},
+			];
+
+			// Create entities that should match the rules
+			const entities = [
+				createProduct('1', 'electronics', 50, true),
+				createProduct('2', 'furniture', 150, true),
+				createProduct('3', 'electronics', 250, true),
+				createProduct('4', 'furniture', 350, true),
+			];
+
+			const matches = engine.findMatchingFrom(entities, complexRules);
+			expect(matches.length).toBeGreaterThan(0);
+		});
+
+		it('handles empty rule sets', () => {
+			const entities = Array.from({ length: 20 }, (_, i) =>
+				createProduct(i.toString(), 'electronics', i * 100, true),
+			);
+
+			const matches = engine.findMatchingFrom(entities, []);
+			expect(matches).toHaveLength(0);
+		});
+	});
 });

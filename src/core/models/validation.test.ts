@@ -66,6 +66,21 @@ describe('Rule Validation', () => {
 			expect(() => validateRule({ tags: { notIn: 123 } })).toThrow(RuleValidationError);
 		});
 
+		it('should reject arrays with invalid values', () => {
+			// Array with null values
+			expect(() => validateRule({ tags: { in: [null] } })).toThrow(RuleValidationError);
+			// Array with undefined values
+			expect(() => validateRule({ tags: { in: [undefined] } })).toThrow(RuleValidationError);
+			// Array with object values
+			expect(() => validateRule({ tags: { in: [{}] } })).toThrow(RuleValidationError);
+			// Array with mixed valid and invalid values
+			expect(() => validateRule({ tags: { in: ['valid', null, 123] } })).toThrow(
+				RuleValidationError,
+			);
+			// Array with symbol values
+			expect(() => validateRule({ tags: { in: [Symbol('test')] } })).toThrow(RuleValidationError);
+		});
+
 		it('should reject non-numeric values for numeric operators', () => {
 			const numericOperators = ['gt', 'gte', 'lt', 'lte'];
 			for (const op of numericOperators) {

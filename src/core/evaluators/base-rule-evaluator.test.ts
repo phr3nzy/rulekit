@@ -431,6 +431,45 @@ describe('BaseRuleEvaluator', () => {
 			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
+		it('should handle array values with non-array target for ne operator', () => {
+			const productWithArrayValue: Entity = {
+				id: '1',
+				name: 'Test Product',
+				attributes: {
+					tags: ['tag1', 'tag2'],
+					__validated: true,
+				},
+			};
+
+			const rule: Rule = {
+				tags: { ne: 'tag3' },
+			};
+
+			expect(evaluator.evaluateRule(productWithArrayValue, rule)).toBe(true);
+		});
+
+		it('should handle array values with non-array target for array operators', () => {
+			const productWithArrayValue: Entity = {
+				id: '1',
+				name: 'Test Product',
+				attributes: {
+					categories: ['Electronics', 'Gadgets'],
+					__validated: true,
+				},
+			};
+
+			const inRule: Rule = {
+				categories: { in: 'Electronics' as any },
+			};
+
+			const notInRule: Rule = {
+				categories: { notIn: 'Electronics' as any },
+			};
+
+			expect(evaluator.evaluateRule(productWithArrayValue, inRule)).toBe(false);
+			expect(evaluator.evaluateRule(productWithArrayValue, notInRule)).toBe(false);
+		});
+
 		it('should handle invalid values in array operators', () => {
 			const rule = {
 				category: {

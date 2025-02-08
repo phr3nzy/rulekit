@@ -181,6 +181,54 @@ describe('UI Configuration Converter', () => {
 			});
 		});
 
+		it('should handle both legacy source and recommendation rules', () => {
+			const config: UIRuleConfiguration = {
+				source: [
+					{
+						name: 'Product',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+							},
+						],
+						values: ['Legacy Product'],
+					},
+				],
+				recommendations: [
+					{
+						name: 'Category',
+						conditions: [
+							{
+								condition: UIConditionType.IN,
+								type: UIComponentType.MULTISELECTOR,
+							},
+						],
+						values: ['Legacy Category'],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.fromRules).toHaveLength(1);
+			expect(result.toRules).toHaveLength(1);
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					Product: {
+						[ComparisonOperators.eq]: ['Legacy Product'],
+					},
+				},
+			});
+			expect(result.toRules[0]).toEqual({
+				attributes: {
+					Category: {
+						[ComparisonOperators.in]: ['Legacy Category'],
+					},
+				},
+			});
+		});
+
 		it('should handle numeric string conversions for TEXT components', () => {
 			const config: UIRuleConfiguration = {
 				filters: [

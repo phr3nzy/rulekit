@@ -148,6 +148,156 @@ describe('ProductAttributeRegistry', () => {
 		).rejects.toThrow();
 	});
 
+	describe('validation with basic and custom rules', () => {
+		it('should handle both basic and custom validations', async () => {
+			// Register premium attribute
+			registry.registerAttribute({
+				name: 'premium',
+				type: AttributeType.BOOLEAN,
+				description: 'Whether the product is premium',
+				validation: {
+					type: AttributeType.BOOLEAN,
+					required: true,
+				},
+			});
+
+			// Register price attribute with both basic and custom validations
+			registry.registerAttribute({
+				name: 'price',
+				type: AttributeType.NUMBER,
+				description: 'Product price',
+				validation: {
+					type: AttributeType.NUMBER,
+					required: true,
+					min: 0,
+					max: 1000,
+					custom: (value: unknown, attributes?: Record<string, unknown>) => {
+						// Custom validation: if product is premium, price must be at least 100
+						if (attributes?.premium && typeof value === 'number') {
+							return value >= 100;
+						}
+						return true;
+					},
+				},
+			});
+
+			// Valid price with basic validation
+			await expect(
+				registry.validateAttributes({
+					price: 50,
+					premium: false,
+				}),
+			).resolves.toBeUndefined();
+
+			// Valid price with both basic and custom validation
+			await expect(
+				registry.validateAttributes({
+					price: 150,
+					premium: true,
+				}),
+			).resolves.toBeUndefined();
+
+			// Invalid price (fails basic validation)
+			await expect(
+				registry.validateAttributes({
+					price: -1,
+					premium: false,
+				}),
+			).rejects.toThrow();
+
+			// Invalid price (fails custom validation)
+			await expect(
+				registry.validateAttributes({
+					price: 50,
+					premium: true,
+				}),
+			).rejects.toThrow();
+		});
+
+		it('should handle attributes with both basic and custom validations in parallel', async () => {
+			// Register two attributes with both basic and custom validations
+			registry.registerAttribute({
+				name: 'price',
+				type: AttributeType.NUMBER,
+				description: 'Product price',
+				validation: {
+					type: AttributeType.NUMBER,
+					required: true,
+					min: 0,
+					custom: (value: unknown) => typeof value === 'number' && value > 0,
+				},
+			});
+
+			registry.registerAttribute({
+				name: 'quantity',
+				type: AttributeType.NUMBER,
+				description: 'Product quantity',
+				validation: {
+					type: AttributeType.NUMBER,
+					required: true,
+					min: 0,
+					custom: (value: unknown) => typeof value === 'number' && value > 0,
+				},
+			});
+
+			// Both validations should run in parallel
+			await expect(
+				registry.validateAttributes({
+					price: 100,
+					quantity: 5,
+				}),
+			).resolves.toBeUndefined();
+
+			// Both validations should fail in parallel
+			await expect(
+				registry.validateAttributes({
+					price: -1,
+					quantity: -1,
+				}),
+			).rejects.toThrow();
+		});
+
+		it('should handle attributes with only custom validation', async () => {
+			// Register an attribute with only custom validation
+			registry.registerAttribute({
+				name: 'customOnly',
+				type: AttributeType.STRING,
+				description: 'Custom validation only',
+				validation: {
+					type: AttributeType.STRING,
+					required: true,
+					custom: (value: unknown) => {
+						if (typeof value !== 'string') return false;
+						// Custom validation: value must be a palindrome
+						const normalized = value.toLowerCase().replace(/[^a-z0-9]/g, '');
+						return normalized === normalized.split('').reverse().join('');
+					},
+				},
+			});
+
+			// Valid palindrome
+			await expect(
+				registry.validateAttributes({
+					customOnly: 'A man a plan a canal Panama',
+				}),
+			).resolves.toBeUndefined();
+
+			// Invalid palindrome
+			await expect(
+				registry.validateAttributes({
+					customOnly: 'not a palindrome',
+				}),
+			).rejects.toThrow();
+
+			// Invalid type
+			await expect(
+				registry.validateAttributes({
+					customOnly: 123,
+				}),
+			).rejects.toThrow();
+		});
+	});
+
 	it('should remove attributes correctly', () => {
 		const attribute = {
 			name: 'removable',

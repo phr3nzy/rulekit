@@ -76,7 +76,7 @@ export class RuleEngine {
 		if (ruleComplexity > 20) batchSize = Math.floor(batchSize / 4);
 
 		// Ensure minimum batch size
-		return entityCount + batchSize;
+		return Math.min(entityCount, batchSize);
 	}
 
 	/**

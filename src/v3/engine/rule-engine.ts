@@ -35,59 +35,78 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	private evaluateRule(entity: TypedEntity<TSchema>, rule: TypedRule<TSchema>): boolean {
 		// Validate entity against schema
 		if (!isValidSchemaObject(entity.attributes, this.schema)) {
+			console.log('Schema validation failed for entity:', entity);
 			return false;
 		}
 
 		// Handle AND conditions
 		if (rule.and?.length) {
-			return rule.and.every(subRule => this.evaluateRule(entity, subRule));
+			console.log('Evaluating AND conditions for entity:', entity.id);
+			const result = rule.and.every(subRule => this.evaluateRule(entity, subRule));
+			console.log('AND result:', result);
+			return result;
 		}
 
 		// Handle OR conditions
 		if (rule.or?.length) {
-			return rule.or.some(subRule => this.evaluateRule(entity, subRule));
+			console.log('Evaluating OR conditions for entity:', entity.id);
+			const result = rule.or.some(subRule => this.evaluateRule(entity, subRule));
+			console.log('OR result:', result);
+			return result;
 		}
 
 		// Handle attribute conditions
 		if (rule.attributes) {
+			console.log('Evaluating attributes for entity:', entity.id);
 			return Object.entries(rule.attributes).every(([key, conditions]) => {
 				const value = entity.attributes[key];
+				console.log('Checking attribute:', key, 'value:', value, 'conditions:', conditions);
 				return Object.entries(conditions).every(([op, expected]) => {
+					let result: boolean;
 					switch (op) {
 						case 'eq':
-							return value === expected;
+							result = value === expected;
+							break;
 						case 'ne':
-							return value !== expected;
+							result = value !== expected;
+							break;
 						case 'gt':
-							return typeof value === 'number' && value > (expected as number);
+							result = typeof value === 'number' && value > (expected as number);
+							break;
 						case 'gte':
-							return typeof value === 'number' && value >= (expected as number);
+							result = typeof value === 'number' && value >= (expected as number);
+							break;
 						case 'lt':
-							return typeof value === 'number' && value < (expected as number);
+							result = typeof value === 'number' && value < (expected as number);
+							break;
 						case 'lte':
-							return typeof value === 'number' && value <= (expected as number);
+							result = typeof value === 'number' && value <= (expected as number);
+							break;
 						case 'in':
-							return (
+							result =
 								Array.isArray(expected) &&
 								(Array.isArray(value)
 									? value.some(v => expected.includes(v))
-									: expected.includes(value))
-							);
+									: expected.includes(value));
+							break;
 						case 'notIn':
-							return (
+							result =
 								Array.isArray(expected) &&
 								(Array.isArray(value)
 									? !value.some(v => expected.includes(v))
-									: !expected.includes(value))
-							);
+									: !expected.includes(value));
+							break;
 						default:
-							return false;
+							result = false;
 					}
+					console.log('Operator:', op, 'Expected:', expected, 'Result:', result);
+					return result;
 				});
 			});
 		}
 
 		// Empty rule matches everything
+		console.log('Empty rule for entity:', entity.id);
 		return true;
 	}
 
@@ -138,7 +157,8 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 			const batchResults = batch.map(entity => {
 				// Evaluate all rules for each entity
 				const ruleResults = rules.map(rule => this.evaluateRule(entity, rule));
-				return ruleResults.every(Boolean);
+				// Entity matches if any rule matches
+				return ruleResults.some(Boolean);
 			});
 
 			// Store batch results in the correct positions
@@ -157,6 +177,11 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 		entities: TypedEntity<TSchema>[],
 		rules: TypedRule<TSchema>[],
 	): TypedEntity<TSchema>[] {
+		// Handle empty rule sets
+		if (!rules.length) {
+			return [];
+		}
+
 		const results = this.processBatch(entities, rules);
 		return entities.filter((_, index) => results[index]);
 	}
