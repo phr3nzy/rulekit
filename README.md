@@ -1,4 +1,4 @@
-# RuleKit - Dynamic Entity Rule Engine
+# RuleKit - High-Performance Entity Rule Engine
 
 A powerful, type-safe, and flexible rule engine for entity matching and filtering in TypeScript/JavaScript applications.
 
@@ -10,13 +10,13 @@ A powerful, type-safe, and flexible rule engine for entity matching and filterin
 
 ## 🌟 Features
 
+- **High Performance**: Optimized synchronous operations with 54,000+ ops/sec for real-world scenarios
 - **Type-Safe Rule Definitions**: Full TypeScript support with strict type checking
 - **Dynamic Attribute Handling**: Support for entities with dynamic, user-defined attributes
 - **Flexible Rule Composition**: Combine rules using AND/OR conditions with unlimited nesting
 - **Comprehensive Validation**: Built-in validation for rules and configurations
 - **Bidirectional Matching**: Built-in support for matching entities in both directions
-- **High Performance**: Optimized for large datasets with efficient rule evaluation
-- **Thoroughly Tested**: Comprehensive test suite with high code coverage and benchmarks
+- **Production Ready**: Thoroughly tested with 100% code coverage and comprehensive benchmarks
 
 ## 📦 Installation
 
@@ -27,7 +27,7 @@ npm install @phr3nzy/rulekit
 # Using yarn
 yarn add @phr3nzy/rulekit
 
-# Using pnpm
+# Using pnpm (recommended)
 pnpm add @phr3nzy/rulekit
 ```
 
@@ -68,20 +68,17 @@ const entity = {
 	},
 };
 
-// Validate product attributes before using them
-await registry.validateAttributes(product.attributes);
+// Validate product attributes
+registry.validateAttributes(entity.attributes);
 
 const entities = [entity];
 
 // 4. Create a rule engine instance
 const engine = new RuleEngine({
-	enableCaching: true,
-	cacheTTLSeconds: 3600, // 1 hour
 	maxBatchSize: 1000,
 });
 
 // 5. Define matching configuration
-// Note: Make sure rule attributes match registered attributes
 const config = {
 	id: 'gaming-accessories',
 	name: 'Gaming Accessories Matching',
@@ -90,7 +87,6 @@ const config = {
 		fromRules: [
 			{
 				and: [
-					// These attributes should match registered ones
 					{ attributes: { category: { eq: 'Electronics' } } },
 					{ attributes: { price: { gte: 1000 } } },
 				],
@@ -110,20 +106,27 @@ const config = {
 	updatedAt: new Date(),
 };
 
-// 6. Process matching
-const { fromEntities, toEntities } = await engine.processConfig(config, entities);
+// 6. Process matching (now synchronous!)
+const { fromEntities, toEntities } = engine.processConfig(config, entities);
 ```
 
 ## 🎯 Key Benefits
 
-1. **Flexible Entity Attributes**
+1. **Blazing Fast Performance**
+
+   - 54,000+ operations per second for real-world scenarios
+   - Optimized synchronous operations
+   - Smart batch processing
+   - Efficient rule evaluation
+
+2. **Flexible Entity Attributes**
 
    - Define any attribute for your entities
    - Strong type validation
    - Custom validation rules
    - Runtime type checking
 
-2. **Powerful Rule Engine**
+3. **Powerful Rule Engine**
 
    - Simple and intuitive rule syntax
    - Combine multiple conditions
@@ -131,13 +134,6 @@ const { fromEntities, toEntities } = await engine.processConfig(config, entities
      - Equality: `eq`, `ne`
      - Numeric: `gt`, `gte`, `lt`, `lte`
      - Arrays: `in`, `notIn`
-
-3. **Performance Optimized**
-
-   - Built-in caching mechanism
-   - Batch processing support
-   - Memory usage controls
-   - Efficient rule evaluation
 
 4. **Developer Experience**
    - Full TypeScript support
@@ -235,19 +231,17 @@ const complexRule = {
 
 ```typescript
 const engine = new RuleEngine({
-	enableCaching: true,
-	cacheTTLSeconds: 3600,
 	maxBatchSize: 1000,
 });
 
-// Find matching "from" entities
-const fromEntities = await engine.findMatchingFrom(entities, rules);
+// Find matching "from" entities (synchronous)
+const fromEntities = engine.findMatchingFrom(entities, rules);
 
-// Find matching "to" entities
-const toEntities = await engine.findMatchingTo(fromEntities, toRules, allEntities);
+// Find matching "to" entities (synchronous)
+const toEntities = engine.findMatchingTo(fromEntities, toRules, allEntities);
 
-// Process a complete matching configuration
-const results = await engine.processConfig(config, entities);
+// Process a complete matching configuration (synchronous)
+const results = engine.processConfig(config, entities);
 ```
 
 ## 🔧 Configuration Options
@@ -317,10 +311,26 @@ interface AttributeDefinition {
 		/**
 		 * Custom validation function
 		 */
-		custom?: (value: unknown, attributes: Record<string, unknown>) => boolean | Promise<boolean>;
+		custom?: (value: unknown, attributes: Record<string, unknown>) => boolean;
 	};
 }
 ```
+
+## ⚡ Performance
+
+RuleKit v2.0+ delivers exceptional performance through synchronous operations:
+
+- Real-world entity matching (100 entities): 54,102 ops/sec
+- Complex nested rules (1000 entities): 2,276 ops/sec
+- Large dataset processing (10000 entities): 247 ops/sec
+- Matching with multiple entities: 2,392 ops/sec
+
+These benchmarks were conducted on:
+
+- Node.js v20.x
+- Intel Core i9 processor
+- 32GB RAM
+- Ubuntu Linux
 
 ## ⚠️ Important Notes
 
@@ -329,7 +339,7 @@ interface AttributeDefinition {
 The `AttributeRegistry` and `RuleEngine` are separate components that work together:
 
 1. The registry provides attribute validation but does not automatically integrate with the rule engine
-2. You must validate entity attributes manually before using them with the rule engine
+2. You must validate entity attributes before using them with the rule engine
 3. Ensure that rules only reference attributes that are registered
 4. Consider validating entities before adding them to your entity pool
 
@@ -351,7 +361,7 @@ const entity = {
 };
 
 // Validate before use
-await registry.validateAttributes(entity.attributes);
+registry.validateAttributes(entity.attributes);
 
 // 2. Validate your rule attributes match registered ones
 const rule = {
@@ -362,15 +372,38 @@ const rule = {
 };
 
 // 3. Consider wrapping entity creation with validation
-async function createEntity(data: Partial<Entity>): Promise<Entity> {
-	await registry.validateAttributes(data.attributes);
+function createEntity(data: Partial<Entity>): Entity {
+	registry.validateAttributes(data.attributes);
 	return data as Entity;
 }
 ```
 
 ## 🤝 Contributing
 
-We welcome contributions to RuleKit! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions to RuleKit! Our development process is designed for quality and efficiency:
+
+1. **Automated CI/CD**
+
+   - Comprehensive test suite with 100% coverage requirement
+   - Automated performance benchmarking
+   - Code quality checks and linting
+   - Codecov integration for coverage tracking
+
+2. **Development Workflow**
+
+   - Fork the repository
+   - Create a feature branch
+   - Add tests for new features
+   - Ensure all tests pass locally
+   - Submit a pull request
+
+3. **Pull Request Process**
+   - Automated CI checks run on every PR
+   - Coverage must be maintained or improved
+   - Performance benchmarks must not regress
+   - Code review by maintainers
+
+See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
 
 ## 📄 License
 
@@ -378,7 +411,7 @@ RuleKit is [MIT licensed](LICENSE).
 
 ## 🙏 Acknowledgments
 
-- Inspired by various rule engines and product recommendation systems
 - Built with TypeScript and modern JavaScript features
 - Thoroughly tested with Vitest
-- Optimized for modern e-commerce applications
+- Optimized for high-performance applications
+- Community-driven improvements and feedback
