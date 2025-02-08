@@ -3,25 +3,29 @@ import type { RuleEvaluator } from './types';
 import { ComparisonOperators } from '../models/types';
 
 /**
- * Base implementation of RuleEvaluator interface
+ * Base implementation of the RuleEvaluator interface providing core rule evaluation logic.
+ * This class implements fundamental rule matching capabilities without caching or optimization.
+ *
+ * @class BaseRuleEvaluator
+ * @implements {RuleEvaluator}
  */
 export class BaseRuleEvaluator implements RuleEvaluator {
+	// Set of valid operators for O(1) lookup
+	private static readonly validOperators = new Set(Object.values(ComparisonOperators));
+
 	/**
-	 * Evaluates a single entity against a rule
+	 * Evaluates if a single entity matches the given rule.
+	 * Handles complex rule structures including nested AND/OR conditions.
 	 */
-	async evaluateRule(entity: Entity, rule: Rule): Promise<boolean> {
+	evaluateRule(entity: Entity, rule: Rule): boolean {
 		// Handle AND conditions
 		if (rule.and) {
-			return (await Promise.all(rule.and.map(subRule => this.evaluateRule(entity, subRule)))).every(
-				Boolean,
-			);
+			return rule.and.every(subRule => this.evaluateRule(entity, subRule));
 		}
 
 		// Handle OR conditions
 		if (rule.or) {
-			return (await Promise.all(rule.or.map(subRule => this.evaluateRule(entity, subRule)))).some(
-				Boolean,
-			);
+			return rule.or.some(subRule => this.evaluateRule(entity, subRule));
 		}
 
 		// Handle attributes
@@ -46,94 +50,107 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 	}
 
 	/**
-	 * Evaluates multiple entities against a single rule
+	 * Efficiently evaluates multiple entities against a single rule.
 	 */
-	async evaluateRuleBatch(entities: Entity[], rule: Rule): Promise<boolean[]> {
-		return Promise.all(entities.map(entity => this.evaluateRule(entity, rule)));
+	evaluateRuleBatch(entities: Entity[], rule: Rule): boolean[] {
+		return entities.map(entity => this.evaluateRule(entity, rule));
 	}
 
 	/**
-	 * Evaluates a single entity against multiple rules
+	 * Evaluates if an entity matches any rule from a set of rules.
 	 */
-	async evaluateRules(entity: Entity, rules: Rule[]): Promise<boolean> {
-		return (await Promise.all(rules.map(rule => this.evaluateRule(entity, rule)))).some(Boolean);
+	evaluateRules(entity: Entity, rules: Rule[]): boolean {
+		return rules.some(rule => this.evaluateRule(entity, rule));
 	}
 
 	/**
-	 * Clears any internal caches or state
+	 * Clears any internal caches or state.
+	 * Base implementation is a no-op as it maintains no state.
 	 */
-	async clear(): Promise<void> {
+	clear(): void {
 		// No-op in base implementation
 	}
 
 	/**
-	 * Evaluates a filter against a value
+	 * Internal method to evaluate a filter against a value.
 	 */
 	private evaluateFilter(value: unknown, filter: Record<ComparisonOperator, RuleValue>): boolean {
-		// If value is undefined, the filter should fail
-		if (value === undefined) {
-			return false;
-		}
+		// Early return for undefined values
+		if (value === undefined) return false;
+
+		// Get entries once and cache
+		const entries = Object.entries(filter);
 
 		// Check for Symbol keys
 		if (Object.getOwnPropertySymbols(filter).length > 0) {
 			return false;
 		}
 
-		// Check for invalid operators
-		const hasInvalidOperator = Object.keys(filter).some(operator => {
-			if (typeof operator !== 'string') {
-				return true;
+		// Fast path for single operator (common case)
+		if (entries.length === 1) {
+			const [operator, targetValue] = entries[0];
+			// Quick validation using Set
+			if (!BaseRuleEvaluator.validOperators.has(operator as ComparisonOperator)) {
+				return false;
 			}
-			return !Object.values(ComparisonOperators).includes(operator as ComparisonOperator);
-		});
-
-		if (hasInvalidOperator) {
-			return false;
+			return this.evaluateOperator(value, operator as ComparisonOperator, targetValue);
 		}
 
-		return Object.entries(filter).every(([operator, targetValue]) => {
-			const op = operator as ComparisonOperator;
-			return this.evaluateOperator(value, op, targetValue);
+		// Multiple operators - validate and evaluate all
+		return entries.every(([operator, targetValue]) => {
+			if (!BaseRuleEvaluator.validOperators.has(operator as ComparisonOperator)) {
+				return false;
+			}
+			return this.evaluateOperator(value, operator as ComparisonOperator, targetValue);
 		});
 	}
 
 	/**
-	 * Evaluates a single operator
+	 * Internal method to evaluate a single comparison operator.
 	 */
 	private evaluateOperator(
 		value: unknown,
 		operator: ComparisonOperator,
 		targetValue: RuleValue,
 	): boolean {
-		// Handle type mismatches for numeric comparisons
-		if (['gt', 'gte', 'lt', 'lte'].includes(operator)) {
-			if (typeof value !== 'number' || typeof targetValue !== 'number') {
-				return false;
+		// Fast path for equality checks (most common)
+		if (operator === 'eq') {
+			return Array.isArray(targetValue)
+				? new Set(targetValue).has(value as string | number)
+				: value === targetValue;
+		}
+
+		// Fast path for numeric comparisons
+		if (typeof value === 'number' && typeof targetValue === 'number') {
+			switch (operator) {
+				case 'gt':
+					return value > targetValue;
+				case 'gte':
+					return value >= targetValue;
+				case 'lt':
+					return value < targetValue;
+				case 'lte':
+					return value <= targetValue;
 			}
 		}
 
+		// Handle array operations with Set for O(1) lookup
+		if (Array.isArray(targetValue)) {
+			const set = new Set(targetValue);
+			switch (operator) {
+				case 'ne':
+					return !set.has(value as string | number);
+				case 'in':
+					return set.has(value as string | number);
+				case 'notIn':
+					return !set.has(value as string | number);
+			}
+		}
+
+		// Handle remaining non-array operations
 		switch (operator) {
-			case 'eq':
-				return Array.isArray(targetValue)
-					? targetValue.includes(value as string | number)
-					: value === targetValue;
 			case 'ne':
-				return Array.isArray(targetValue)
-					? !targetValue.includes(value as string | number)
-					: value !== targetValue;
-			case 'gt':
-				return (value as number) > (targetValue as number);
-			case 'gte':
-				return (value as number) >= (targetValue as number);
-			case 'lt':
-				return (value as number) < (targetValue as number);
-			case 'lte':
-				return (value as number) <= (targetValue as number);
-			case 'in':
-				return Array.isArray(targetValue) && targetValue.includes(value as string | number);
-			case 'notIn':
-				return Array.isArray(targetValue) && !targetValue.includes(value as string | number);
+				return value !== targetValue;
 			default:
 				return false;
 		}

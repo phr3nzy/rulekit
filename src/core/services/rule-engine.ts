@@ -2,22 +2,17 @@ import type { Entity, Rule, MatchingConfig } from '../models/types';
 import { BaseRuleEvaluator } from '../evaluators/base-rule-evaluator';
 import { RuleEvaluator } from '../evaluators/types';
 
+/**
+ * Configuration interface for the RuleEngine service.
+ */
 interface RuleEngineConfig {
-	/**
-	 * Rule evaluator implementation to use
-	 * @default BaseRuleEvaluator
-	 */
 	evaluator?: RuleEvaluator;
-
-	/**
-	 * Maximum number of entities to process in a single batch
-	 * @default 1000
-	 */
 	maxBatchSize?: number;
 }
 
 /**
- * Main RuleEngine service for rule-based matching
+ * Core service for evaluating and matching entities based on rule configurations.
+ * Provides methods for finding matching entities based on complex rule sets.
  */
 export class RuleEngine {
 	private readonly evaluator: RuleEvaluator;
@@ -34,73 +29,98 @@ export class RuleEngine {
 	}
 
 	/**
-	 * Finds entities that match the 'from' rules
+	 * Finds entities that satisfy all provided 'from' rules.
 	 */
-	async findMatchingFrom(entities: Entity[], rules: Rule[]): Promise<Entity[]> {
-		const results = await this.processBatch(entities, rules);
+	findMatchingFrom(entities: Entity[], rules: Rule[]): Entity[] {
+		const results = this.processBatch(entities, rules);
 		return entities.filter((_, index) => results[index]);
 	}
 
 	/**
-	 * Finds matching 'to' entities based on 'from' entities and 'to' rules
+	 * Finds target entities that can be matched with source entities based on 'to' rules.
 	 */
-	async findMatchingTo(
-		fromEntities: Entity[],
-		toRules: Rule[],
-		allEntities: Entity[],
-	): Promise<Entity[]> {
+	findMatchingTo(fromEntities: Entity[], toRules: Rule[], allEntities: Entity[]): Entity[] {
 		// First, filter out 'from' entities from all entities
 		const candidateEntities = allEntities.filter(
 			entity => !fromEntities.some(from => from.id === entity.id),
 		);
 
 		// Then find entities matching 'to' rules
-		const results = await this.processBatch(candidateEntities, toRules);
+		const results = this.processBatch(candidateEntities, toRules);
 		return candidateEntities.filter((_, index) => results[index]);
 	}
 
 	/**
-	 * Processes entities in batches to avoid memory issues with large datasets
+	 * Splits entities into optimal batch sizes based on complexity
 	 */
-	private async processBatch(entities: Entity[], rules: Rule[]): Promise<boolean[]> {
-		const results: boolean[] = [];
-		const batches = Math.ceil(entities.length / this.config.maxBatchSize);
+	private getBatchSize(entities: Entity[], rules: Rule[]): number {
+		// Start with configured max batch size
+		let batchSize = this.config.maxBatchSize;
 
+		// Adjust based on rule complexity
+		const ruleComplexity = rules.reduce((complexity, rule) => {
+			// Count number of conditions in rule
+			const countConditions = (r: Rule): number => {
+				let count = 0;
+				if (r.and) count += r.and.reduce((sum, subRule) => sum + countConditions(subRule), 0);
+				if (r.or) count += r.or.reduce((sum, subRule) => sum + countConditions(subRule), 0);
+				if (r.attributes) count += Object.keys(r.attributes).length;
+				return count || 1;
+			};
+			return complexity + countConditions(rule);
+		}, 0);
+
+		// Reduce batch size for complex rules
+		if (ruleComplexity > 10) batchSize = Math.floor(batchSize / 2);
+		if (ruleComplexity > 20) batchSize = Math.floor(batchSize / 4);
+
+		// Ensure minimum batch size
+		return Math.max(batchSize, 50);
+	}
+
+	/**
+	 * Processes entities in optimally-sized batches
+	 */
+	private processBatch(entities: Entity[], rules: Rule[]): boolean[] {
+		const batchSize = this.getBatchSize(entities, rules);
+		const results = new Array(entities.length);
+		const batches = Math.ceil(entities.length / batchSize);
+
+		// Process all batches
 		for (let i = 0; i < batches; i++) {
-			const start = i * this.config.maxBatchSize;
-			const end = Math.min(start + this.config.maxBatchSize, entities.length);
+			const start = i * batchSize;
+			const end = Math.min(start + batchSize, entities.length);
 			const batch = entities.slice(start, end);
 
-			// Evaluate each entity against all rules
-			const batchResults = await Promise.all(
-				batch.map(async entity => {
-					// Each rule in the array must match (AND condition)
-					const ruleResults = await Promise.all(
-						rules.map(rule => this.evaluator.evaluateRule(entity, rule)),
-					);
-					return ruleResults.every(Boolean);
-				}),
-			);
+			// Process each entity in the batch
+			const batchResults = batch.map(entity => {
+				// Evaluate all rules for each entity
+				const ruleResults = rules.map(rule => this.evaluator.evaluateRule(entity, rule));
+				return ruleResults.every(Boolean);
+			});
 
-			results.push(...batchResults);
+			// Store batch results in the correct positions
+			batchResults.forEach((result, batchIndex) => {
+				results[start + batchIndex] = result;
+			});
 		}
 
 		return results;
 	}
 
 	/**
-	 * Processes a matching configuration
+	 * Processes a complete matching configuration to find both source and target entities.
 	 */
-	async processConfig(
+	processConfig(
 		config: MatchingConfig,
 		entities: Entity[],
-	): Promise<{ fromEntities: Entity[]; toEntities: Entity[] }> {
+	): { fromEntities: Entity[]; toEntities: Entity[] } {
 		if (!config.isActive) {
 			return { fromEntities: [], toEntities: [] };
 		}
 
-		const fromEntities = await this.findMatchingFrom(entities, config.ruleSet.fromRules);
-		const toEntities = await this.findMatchingTo(fromEntities, config.ruleSet.toRules, entities);
+		const fromEntities = this.findMatchingFrom(entities, config.ruleSet.fromRules);
+		const toEntities = this.findMatchingTo(fromEntities, config.ruleSet.toRules, entities);
 
 		return { fromEntities, toEntities };
 	}

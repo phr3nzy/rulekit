@@ -73,7 +73,7 @@ describe('RuleEngine', () => {
 	});
 
 	describe('matching from', () => {
-		it('should find entities matching from rules', async () => {
+		it('should find entities matching from rules', () => {
 			const rules: Rule[] = [
 				{
 					and: [
@@ -83,12 +83,12 @@ describe('RuleEngine', () => {
 				},
 			];
 
-			const fromEntities = await engine.findMatchingFrom(testEntities, rules);
+			const fromEntities = engine.findMatchingFrom(testEntities, rules);
 			expect(fromEntities).toHaveLength(2);
 			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '4']); // Laptop and Desktop PC
 		});
 
-		it('should handle complex from rules with OR conditions', async () => {
+		it('should handle complex from rules with OR conditions', () => {
 			const rules: Rule[] = [
 				{
 					or: [
@@ -103,14 +103,56 @@ describe('RuleEngine', () => {
 				},
 			];
 
-			const fromEntities = await engine.findMatchingFrom(testEntities, rules);
+			const fromEntities = engine.findMatchingFrom(testEntities, rules);
 			expect(fromEntities).toHaveLength(4);
 			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '3', '4', '5']); // All TechBrand products and Electronics
+		});
+
+		it('should handle very complex rules that reduce batch size', () => {
+			// Create a complex rule with many conditions to trigger batch size reduction
+			const complexRule: Rule = {
+				and: Array.from({ length: 5 }, () => ({
+					or: Array.from({ length: 5 }, () => ({
+						attributes: {
+							category: { eq: 'Electronics' },
+							price: { gt: 1000 },
+							brand: { eq: 'TechBrand' },
+							color: { eq: 'blue' },
+							weight: { eq: 50 },
+						},
+					})),
+				})),
+			};
+
+			const fromEntities = engine.findMatchingFrom(testEntities, [complexRule]);
+			expect(fromEntities).toHaveLength(2);
+			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '4']); // Laptop and Desktop PC
+		});
+
+		it('should handle extremely complex rules that reduce batch size further', () => {
+			// Create an even more complex rule to trigger maximum batch size reduction
+			const complexRule: Rule = {
+				and: Array.from({ length: 10 }, () => ({
+					or: Array.from({ length: 10 }, () => ({
+						attributes: {
+							category: { eq: 'Electronics' },
+							price: { gt: 1000 },
+							brand: { eq: 'TechBrand' },
+							color: { eq: 'blue' },
+							weight: { eq: 50 },
+						},
+					})),
+				})),
+			};
+
+			const fromEntities = engine.findMatchingFrom(testEntities, [complexRule]);
+			expect(fromEntities).toHaveLength(2);
+			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '4']); // Laptop and Desktop PC
 		});
 	});
 
 	describe('matching to', () => {
-		it('should find matching to entities excluding from entities', async () => {
+		it('should find matching to entities excluding from entities', () => {
 			const fromEntities = testEntities.filter(e => e.attributes.category === 'Electronics');
 			const toRules: Rule[] = [
 				{
@@ -121,13 +163,13 @@ describe('RuleEngine', () => {
 				},
 			];
 
-			const toEntities = await engine.findMatchingTo(fromEntities, toRules, testEntities);
+			const toEntities = engine.findMatchingTo(fromEntities, toRules, testEntities);
 
 			expect(toEntities).toHaveLength(2);
 			expect(toEntities.map(e => e.id).sort()).toEqual(['3', '5']); // Wireless Mouse and Keyboard
 		});
 
-		it('should handle price range matching', async () => {
+		it('should handle price range matching', () => {
 			const fromEntities = [testEntities[0]]; // Laptop
 			const toRules: Rule[] = [
 				{
@@ -138,7 +180,7 @@ describe('RuleEngine', () => {
 				},
 			];
 
-			const toEntities = await engine.findMatchingTo(fromEntities, toRules, testEntities);
+			const toEntities = engine.findMatchingTo(fromEntities, toRules, testEntities);
 
 			expect(toEntities).toHaveLength(3);
 			expect(toEntities.map(e => e.id).sort()).toEqual(['2', '3', '5']); // All accessories
@@ -146,7 +188,7 @@ describe('RuleEngine', () => {
 	});
 
 	describe('matching configuration', () => {
-		it('should process active matching config', async () => {
+		it('should process active matching config', () => {
 			const config: MatchingConfig = {
 				id: 'match1',
 				name: 'Electronics with Accessories',
@@ -166,7 +208,7 @@ describe('RuleEngine', () => {
 				updatedAt: new Date(),
 			};
 
-			const result = await engine.processConfig(config, testEntities);
+			const result = engine.processConfig(config, testEntities);
 
 			expect(result.fromEntities).toHaveLength(2); // Laptop and Desktop PC
 			expect(result.toEntities).toHaveLength(2); // TechBrand accessories
@@ -174,7 +216,7 @@ describe('RuleEngine', () => {
 			expect(result.toEntities.map(e => e.id).sort()).toEqual(['3', '5']);
 		});
 
-		it('should return empty results for inactive config', async () => {
+		it('should return empty results for inactive config', () => {
 			const config: MatchingConfig = {
 				id: 'match1',
 				name: 'Electronics with Accessories',
@@ -187,7 +229,7 @@ describe('RuleEngine', () => {
 				updatedAt: new Date(),
 			};
 
-			const result = await engine.processConfig(config, testEntities);
+			const result = engine.processConfig(config, testEntities);
 
 			expect(result.fromEntities).toHaveLength(0);
 			expect(result.toEntities).toHaveLength(0);

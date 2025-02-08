@@ -1,5 +1,6 @@
 /**
- * UI-specific condition types
+ * Defines the available condition types for UI rule configuration.
+ * These types represent different ways to compare values in the UI.
  */
 export const UIConditionType = {
 	IS: 'Is',
@@ -12,7 +13,7 @@ export const UIConditionType = {
 export type UIConditionTypeValue = (typeof UIConditionType)[keyof typeof UIConditionType];
 
 /**
- * UI component types for rendering
+ * Defines the available UI component types for rendering rule conditions.
  */
 export const UIComponentType = {
 	SELECT: 'select',
@@ -24,18 +25,18 @@ export const UIComponentType = {
 export type UIComponentTypeValue = (typeof UIComponentType)[keyof typeof UIComponentType];
 
 /**
- * Base condition structure for UI
+ * Represents a single condition configuration for UI rendering.
  */
 export type UICondition = {
 	condition: UIConditionTypeValue;
-	min?: number;
-	max?: number;
+	min?: number | string | null;
+	max?: number | string | null;
 	type: UIComponentTypeValue;
 	component?: UIComponentTypeValue;
 };
 
 /**
- * Filter configuration for UI
+ * Defines a named filter with associated conditions for UI rendering.
  */
 export type UIFilter = {
 	name: string;
@@ -44,7 +45,7 @@ export type UIFilter = {
 };
 
 /**
- * Generic matching rule type
+ * Represents a rule for matching entities with specific conditions.
  */
 export type UIMatchingRule = {
 	name: string;
@@ -53,7 +54,7 @@ export type UIMatchingRule = {
 };
 
 /**
- * Complete UI configuration format
+ * Defines the complete UI configuration structure for rule-based matching.
  */
 export type UIRuleConfiguration = {
 	filters?: UIFilter[];
@@ -65,7 +66,7 @@ export type UIRuleConfiguration = {
 };
 
 /**
- * Error thrown when UI configuration validation fails
+ * Custom error class for UI configuration validation failures.
  */
 export class UIConfigurationError extends Error {
 	constructor(message: string) {

@@ -1,6 +1,6 @@
-# RuleKit - Dynamic Product Rule Engine
+# RuleKit - Dynamic Entity Rule Engine
 
-A powerful, type-safe, and flexible rule engine for product filtering and cross-selling recommendations in TypeScript/JavaScript applications.
+A powerful, type-safe, and flexible rule engine for entity matching and filtering in TypeScript/JavaScript applications.
 
 [![CI](https://github.com/phr3nzy/rulekit/actions/workflows/ci.yml/badge.svg)](https://github.com/phr3nzy/rulekit/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/phr3nzy/rulekit/branch/main/graph/badge.svg)](https://codecov.io/gh/phr3nzy/rulekit)
@@ -11,12 +11,12 @@ A powerful, type-safe, and flexible rule engine for product filtering and cross-
 ## 🌟 Features
 
 - **Type-Safe Rule Definitions**: Full TypeScript support with strict type checking
-- **Dynamic Attribute Handling**: Support for products with dynamic, user-defined attributes
+- **Dynamic Attribute Handling**: Support for entities with dynamic, user-defined attributes
 - **Flexible Rule Composition**: Combine rules using AND/OR conditions with unlimited nesting
 - **Comprehensive Validation**: Built-in validation for rules and configurations
-- **Cross-Selling Support**: Built-in support for product recommendations and cross-selling
-- **Memory Efficient**: Optional TTL and max items for cache management
-- **Thoroughly Tested**: Comprehensive test suite with high code coverage
+- **Bidirectional Matching**: Built-in support for matching entities in both directions
+- **High Performance**: Optimized for large datasets with efficient rule evaluation
+- **Thoroughly Tested**: Comprehensive test suite with high code coverage and benchmarks
 
 ## 📦 Installation
 
@@ -34,12 +34,12 @@ pnpm add @phr3nzy/rulekit
 ## 🚀 Quick Start
 
 ```typescript
-import { RuleEngine, ProductAttributeRegistry } from '@phr3nzy/rulekit';
+import { RuleEngine, AttributeRegistry } from '@phr3nzy/rulekit';
 
 // 1. Create an attribute registry for validation
-const registry = new ProductAttributeRegistry();
+const registry = new AttributeRegistry();
 
-// 2. Register product attributes with validation rules
+// 2. Register entity attributes with validation rules
 registry.registerAttribute({
 	name: 'price',
 	type: 'number',
@@ -57,8 +57,8 @@ registry.registerAttribute({
 	},
 });
 
-// 3. Create and validate products
-const product = {
+// 3. Create and validate entities
+const entity = {
 	id: '1',
 	name: 'Gaming Laptop',
 	attributes: {
@@ -71,7 +71,7 @@ const product = {
 // Validate product attributes before using them
 await registry.validateAttributes(product.attributes);
 
-const products = [product];
+const entities = [entity];
 
 // 4. Create a rule engine instance
 const engine = new RuleEngine({
@@ -80,25 +80,28 @@ const engine = new RuleEngine({
 	maxBatchSize: 1000,
 });
 
-// 5. Define cross-selling configuration
+// 5. Define matching configuration
 // Note: Make sure rule attributes match registered attributes
 const config = {
 	id: 'gaming-accessories',
-	name: 'Gaming Accessories Cross-Sell',
-	description: 'Recommend gaming accessories for gaming laptops',
+	name: 'Gaming Accessories Matching',
+	description: 'Match gaming laptops with compatible accessories',
 	ruleSet: {
-		sourceRules: [
+		fromRules: [
 			{
 				and: [
 					// These attributes should match registered ones
-					{ category: { eq: 'Electronics' } },
-					{ price: { gte: 1000 } },
+					{ attributes: { category: { eq: 'Electronics' } } },
+					{ attributes: { price: { gte: 1000 } } },
 				],
 			},
 		],
-		recommendationRules: [
+		toRules: [
 			{
-				and: [{ category: { eq: 'Accessories' } }, { price: { lt: 200 } }],
+				and: [
+					{ attributes: { category: { eq: 'Accessories' } } },
+					{ attributes: { price: { lt: 200 } } },
+				],
 			},
 		],
 	},
@@ -107,15 +110,15 @@ const config = {
 	updatedAt: new Date(),
 };
 
-// 6. Process recommendations
-const { sourceProducts, recommendedProducts } = await engine.processConfig(products, config);
+// 6. Process matching
+const { fromEntities, toEntities } = await engine.processConfig(config, entities);
 ```
 
 ## 🎯 Key Benefits
 
-1. **Flexible Product Attributes**
+1. **Flexible Entity Attributes**
 
-   - Define any attribute for your products
+   - Define any attribute for your entities
    - Strong type validation
    - Custom validation rules
    - Runtime type checking
@@ -144,7 +147,7 @@ const { sourceProducts, recommendedProducts } = await engine.processConfig(produ
 
 ## 📖 Detailed Usage
 
-### Defining Product Attributes
+### Defining Entity Attributes
 
 ```typescript
 const registry = new ProductAttributeRegistry();
@@ -237,21 +240,14 @@ const engine = new RuleEngine({
 	maxBatchSize: 1000,
 });
 
-// Find matching source products
-const sourceProducts = await engine.findSourceProducts(products, rules);
+// Find matching "from" entities
+const fromEntities = await engine.findMatchingFrom(entities, rules);
 
-// Find recommended products
-const recommendedProducts = await engine.findRecommendedProducts(
-	sourceProducts,
-	recommendationRules,
-	allProducts,
-);
+// Find matching "to" entities
+const toEntities = await engine.findMatchingTo(fromEntities, toRules, allEntities);
 
-// Process a complete cross-selling configuration
-const results = await engine.processConfig(config, products);
-
-// Clear cache
-await engine.clearCache();
+// Process a complete matching configuration
+const results = await engine.processConfig(config, entities);
 ```
 
 ## 🔧 Configuration Options
@@ -259,27 +255,69 @@ await engine.clearCache();
 ### Rule Engine Options
 
 ```typescript
+/**
+ * Configuration options for the RuleEngine
+ */
 interface RuleEngineConfig {
-	enableCaching?: boolean; // Enable/disable caching
-	cacheTTLSeconds?: number; // Cache TTL in seconds
-	maxBatchSize?: number; // Maximum batch size for processing
-	cache?: Cache; // Custom cache implementation
-	evaluator?: RuleEvaluator; // Custom rule evaluator
+	/**
+	 * Custom rule evaluator implementation
+	 * @default BaseRuleEvaluator
+	 */
+	evaluator?: RuleEvaluator;
+
+	/**
+	 * Maximum number of entities to process in a single batch
+	 * @default 1000
+	 */
+	maxBatchSize?: number;
 }
 ```
 
 ### Attribute Types
 
 ```typescript
+/**
+ * Definition for an entity attribute
+ */
 interface AttributeDefinition {
+	/**
+	 * Name of the attribute
+	 */
 	name: string;
+
+	/**
+	 * Type of the attribute
+	 */
 	type: 'string' | 'number' | 'boolean';
+
+	/**
+	 * Validation rules for the attribute
+	 */
 	validation: {
+		/**
+		 * Whether the attribute is required
+		 */
 		required?: boolean;
-		min?: number; // For numbers
-		max?: number; // For numbers
-		pattern?: RegExp; // For strings
-		custom?: (value: any, attributes: Record<string, unknown>) => boolean | Promise<boolean>;
+
+		/**
+		 * Minimum value (for numbers)
+		 */
+		min?: number;
+
+		/**
+		 * Maximum value (for numbers)
+		 */
+		max?: number;
+
+		/**
+		 * Pattern to match (for strings)
+		 */
+		pattern?: RegExp;
+
+		/**
+		 * Custom validation function
+		 */
+		custom?: (value: unknown, attributes: Record<string, unknown>) => boolean | Promise<boolean>;
 	};
 }
 ```
@@ -288,20 +326,24 @@ interface AttributeDefinition {
 
 ### Attribute Validation
 
-The `ProductAttributeRegistry` and `RuleEngine` are currently separate components:
+The `AttributeRegistry` and `RuleEngine` are separate components that work together:
 
 1. The registry provides attribute validation but does not automatically integrate with the rule engine
-2. You must validate product attributes manually before using them with the rule engine
+2. You must validate entity attributes manually before using them with the rule engine
 3. Ensure that rules only reference attributes that are registered
-4. Consider validating products before adding them to your product pool
+4. Consider validating entities before adding them to your entity pool
 
 Best practices:
 
 ```typescript
-// 1. Always validate products before using them
-const product = {
+/**
+ * Example of proper entity validation workflow
+ */
+
+// 1. Always validate entities before using them
+const entity = {
 	id: '1',
-	name: 'Product',
+	name: 'Entity',
 	attributes: {
 		price: 100,
 		category: 'Electronics',
@@ -309,18 +351,20 @@ const product = {
 };
 
 // Validate before use
-await registry.validateAttributes(product.attributes);
+await registry.validateAttributes(entity.attributes);
 
 // 2. Validate your rule attributes match registered ones
 const rule = {
-	price: { gt: 50 }, // ✅ 'price' is registered
-	unknown: { eq: true }, // ❌ 'unknown' is not registered
+	attributes: {
+		price: { gt: 50 }, // ✅ 'price' is registered
+		unknown: { eq: true }, // ❌ 'unknown' is not registered
+	},
 };
 
-// 3. Consider wrapping product creation with validation
-async function createProduct(data) {
+// 3. Consider wrapping entity creation with validation
+async function createEntity(data: Partial<Entity>): Promise<Entity> {
 	await registry.validateAttributes(data.attributes);
-	return data;
+	return data as Entity;
 }
 ```
 

@@ -1,60 +1,11 @@
-/**
- * Test Coverage Analysis for BaseRuleEvaluator
- *
- * Current Coverage:
- * - Statements: 100%
- * - Branches: 97.82%
- * - Functions: 100%
- * - Lines: 100%
- *
- * Coverage Notes:
- * 1. The uncovered branch on line 58 (`if (productValue === undefined) return false;`) appears
- *    to be a limitation of the coverage tool rather than a genuine gap in test coverage.
- *    We test this condition thoroughly through multiple scenarios:
- *    - Non-existent attributes
- *    - Explicitly undefined attributes
- *    - Attributes set to undefined via Object.defineProperty
- *    - Multiple conditions with undefined attributes
- *    - Sequential evaluation with undefined attributes
- *    - Null values
- *    - Mixed null and defined values
- *
- * 2. Test Organization:
- *    - Single Rule Evaluation: Tests basic comparison operators and type handling
- *    - Complex Rule Evaluation: Tests AND/OR conditions and nested rules
- *    - Batch Evaluation: Tests processing multiple products/rules
- *    - Edge Cases: Tests undefined, null, and invalid scenarios
- *
- * 3. Key Test Categories:
- *    a) Value Comparisons:
- *       - Equality/Inequality (eq, ne)
- *       - Numeric comparisons (gt, gte, lt, lte)
- *       - Array operations (in, notIn)
- *    b) Type Safety:
- *       - Type mismatches in numeric comparisons
- *       - Non-numeric values in numeric comparisons
- *    c) Rule Structure:
- *       - Simple leaf rules
- *       - AND/OR combinations
- *       - Nested conditions
- *    d) Edge Cases:
- *       - Undefined/null handling
- *       - Empty condition arrays
- *       - Invalid operators
- *
- * Note: The remaining uncovered branch (97.82%) is likely due to how JavaScript/TypeScript
- * handles property access and undefined checks, making it difficult for the coverage tool
- * to recognize certain branches as covered, even though the functionality is thoroughly tested.
- */
-
 import { describe, it, expect } from 'vitest';
 import { BaseRuleEvaluator } from './base-rule-evaluator';
-import type { Product, Rule } from '../models/types';
+import type { Entity, Rule } from '../models/types';
 
 describe('BaseRuleEvaluator', () => {
 	const evaluator = new BaseRuleEvaluator();
 
-	const testProducts: Product[] = [
+	const testProducts: Entity[] = [
 		{
 			id: '1',
 			name: 'Laptop',
@@ -94,39 +45,39 @@ describe('BaseRuleEvaluator', () => {
 	];
 
 	describe('evaluateRule', () => {
-		it('should evaluate simple rules', async () => {
+		it('should evaluate simple rules', () => {
 			const rule: Rule = {
 				category: { eq: 'Electronics' },
 			};
-			const result = await evaluator.evaluateRule(testProducts[0], rule);
+			const result = evaluator.evaluateRule(testProducts[0], rule);
 			expect(result).toBe(true);
 		});
 
-		it('should evaluate numeric comparisons', async () => {
+		it('should evaluate numeric comparisons', () => {
 			const rule: Rule = {
 				price: { gt: 1000 },
 			};
-			const result = await evaluator.evaluateRule(testProducts[0], rule);
+			const result = evaluator.evaluateRule(testProducts[0], rule);
 			expect(result).toBe(true);
 		});
 
-		it('should evaluate AND conditions', async () => {
+		it('should evaluate AND conditions', () => {
 			const rule: Rule = {
 				and: [{ category: { eq: 'Electronics' } }, { price: { gt: 1000 } }],
 			};
-			const result = await evaluator.evaluateRule(testProducts[0], rule);
+			const result = evaluator.evaluateRule(testProducts[0], rule);
 			expect(result).toBe(true);
 		});
 
-		it('should evaluate OR conditions', async () => {
+		it('should evaluate OR conditions', () => {
 			const rule: Rule = {
 				or: [{ category: { eq: 'Electronics' } }, { price: { lt: 100 } }],
 			};
-			const result = await evaluator.evaluateRule(testProducts[0], rule);
+			const result = evaluator.evaluateRule(testProducts[0], rule);
 			expect(result).toBe(true);
 		});
 
-		it('should evaluate nested AND/OR conditions', async () => {
+		it('should evaluate nested AND/OR conditions', () => {
 			const rule: Rule = {
 				or: [
 					{
@@ -137,55 +88,55 @@ describe('BaseRuleEvaluator', () => {
 					},
 				],
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(true); // Laptop
-			expect(await evaluator.evaluateRule(testProducts[1], rule)).toBe(true); // Laptop Bag
-			expect(await evaluator.evaluateRule(testProducts[2], rule)).toBe(true); // Mouse
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(true); // Laptop
+			expect(evaluator.evaluateRule(testProducts[1], rule)).toBe(true); // Laptop Bag
+			expect(evaluator.evaluateRule(testProducts[2], rule)).toBe(true); // Mouse
 		});
 
-		it('should evaluate array operators', async () => {
+		it('should evaluate array operators', () => {
 			const rule: Rule = {
 				category: { in: ['Electronics', 'Accessories'] },
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[1], rule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[1], rule)).toBe(true);
 		});
 
-		it('should evaluate multiple conditions', async () => {
+		it('should evaluate multiple conditions', () => {
 			const rule: Rule = {
 				category: { eq: 'Electronics' },
 				brand: { eq: 'TechBrand' },
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[1], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[1], rule)).toBe(false);
 		});
 	});
 
 	describe('single rule evaluation', () => {
-		it('should evaluate equality condition', async () => {
+		it('should evaluate equality condition', () => {
 			const rule: Rule = { category: { eq: 'Electronics' } };
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[1], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[1], rule)).toBe(false);
 		});
 
-		it('should evaluate inequality condition', async () => {
+		it('should evaluate inequality condition', () => {
 			const rule: Rule = { category: { ne: 'Electronics' } };
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
-			expect(await evaluator.evaluateRule(testProducts[1], rule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[1], rule)).toBe(true);
 		});
 
-		it('should evaluate greater than or equal comparisons', async () => {
+		it('should evaluate greater than or equal comparisons', () => {
 			const gteRule: Rule = { price: { gte: 1200 } };
-			expect(await evaluator.evaluateRule(testProducts[0], gteRule)).toBe(true); // Equal to
+			expect(evaluator.evaluateRule(testProducts[0], gteRule)).toBe(true); // Equal to
 
 			const gteRule2: Rule = { price: { gte: 1000 } };
-			expect(await evaluator.evaluateRule(testProducts[0], gteRule2)).toBe(true); // Greater than
+			expect(evaluator.evaluateRule(testProducts[0], gteRule2)).toBe(true); // Greater than
 
 			const gteRule3: Rule = { price: { gte: 1500 } };
-			expect(await evaluator.evaluateRule(testProducts[0], gteRule3)).toBe(false); // Less than
+			expect(evaluator.evaluateRule(testProducts[0], gteRule3)).toBe(false); // Less than
 		});
 
-		it('should handle type mismatches in numeric comparisons', async () => {
-			const product: Product = {
+		it('should handle type mismatches in numeric comparisons', () => {
+			const product: Entity = {
 				id: '1',
 				name: 'Test Product',
 				attributes: {
@@ -202,12 +153,12 @@ describe('BaseRuleEvaluator', () => {
 			];
 
 			for (const rule of rules) {
-				expect(await evaluator.evaluateRule(product, rule)).toBe(false);
+				expect(evaluator.evaluateRule(product, rule)).toBe(false);
 			}
 		});
 
-		it('should handle non-numeric rule values in numeric comparisons', async () => {
-			const product: Product = {
+		it('should handle non-numeric rule values in numeric comparisons', () => {
+			const product: Entity = {
 				id: '1',
 				name: 'Test Product',
 				attributes: {
@@ -224,87 +175,87 @@ describe('BaseRuleEvaluator', () => {
 			];
 
 			for (const rule of rules) {
-				expect(await evaluator.evaluateRule(product, rule)).toBe(false);
+				expect(evaluator.evaluateRule(product, rule)).toBe(false);
 			}
 		});
 
-		it('should handle less than comparisons', async () => {
+		it('should handle less than comparisons', () => {
 			const ltRule: Rule = { price: { lt: 1500 } };
-			expect(await evaluator.evaluateRule(testProducts[0], ltRule)).toBe(true); // 1200 < 1500
-			expect(await evaluator.evaluateRule(testProducts[1], ltRule)).toBe(true); // 50 < 1500
+			expect(evaluator.evaluateRule(testProducts[0], ltRule)).toBe(true); // 1200 < 1500
+			expect(evaluator.evaluateRule(testProducts[1], ltRule)).toBe(true); // 50 < 1500
 
 			const ltRule2: Rule = { price: { lt: 1000 } };
-			expect(await evaluator.evaluateRule(testProducts[0], ltRule2)).toBe(false); // 1200 !< 1000
+			expect(evaluator.evaluateRule(testProducts[0], ltRule2)).toBe(false); // 1200 !< 1000
 		});
 
-		it('should handle less than or equal comparisons', async () => {
+		it('should handle less than or equal comparisons', () => {
 			const lteRule: Rule = { price: { lte: 1200 } };
-			expect(await evaluator.evaluateRule(testProducts[0], lteRule)).toBe(true); // Equal to
-			expect(await evaluator.evaluateRule(testProducts[1], lteRule)).toBe(true); // Less than
+			expect(evaluator.evaluateRule(testProducts[0], lteRule)).toBe(true); // Equal to
+			expect(evaluator.evaluateRule(testProducts[1], lteRule)).toBe(true); // Less than
 
 			const lteRule2: Rule = { price: { lte: 1000 } };
-			expect(await evaluator.evaluateRule(testProducts[0], lteRule2)).toBe(false); // Greater than
+			expect(evaluator.evaluateRule(testProducts[0], lteRule2)).toBe(false); // Greater than
 		});
 
-		it('should handle non-string operator keys with invalid operators', async () => {
+		it('should handle non-string operator keys with invalid operators', () => {
 			const rule = {
 				price: {
 					[123 as any]: 100,
 					'invalid-op': 200,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 	});
 
 	describe('complex rule evaluation', () => {
-		it('should evaluate non-existent category in leaf rules', async () => {
+		it('should evaluate non-existent category in leaf rules', () => {
 			const leafRule: Rule = {
 				category: { eq: 'NonExistent' },
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], leafRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], leafRule)).toBe(false);
 		});
 
-		it('should evaluate combined leaf and AND conditions', async () => {
+		it('should evaluate combined leaf and AND conditions', () => {
 			const leafAndRule: Rule = {
 				category: { eq: 'Electronics' },
 				and: [{ price: { gt: 1000 } }],
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], leafAndRule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[1], leafAndRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], leafAndRule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[1], leafAndRule)).toBe(false);
 		});
 
-		it('should evaluate in/notIn conditions', async () => {
+		it('should evaluate in/notIn conditions', () => {
 			const inRule: Rule = { brand: { in: ['TechBrand', 'OtherBrand'] } };
 			const notInRule: Rule = { brand: { notIn: ['TechBrand', 'OtherBrand'] } };
 
-			expect(await evaluator.evaluateRule(testProducts[0], inRule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[1], inRule)).toBe(false);
-			expect(await evaluator.evaluateRule(testProducts[1], notInRule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[0], notInRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], inRule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[1], inRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[1], notInRule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[0], notInRule)).toBe(false);
 		});
 	});
 
 	describe('batch evaluation', () => {
-		it('should evaluate multiple products against a single rule', async () => {
+		it('should evaluate multiple products against a single rule', () => {
 			const rule: Rule = { category: { eq: 'Accessories' } };
-			const results = await evaluator.evaluateRuleBatch(testProducts, rule);
+			const results = evaluator.evaluateRuleBatch(testProducts, rule);
 
 			expect(results).toEqual([false, true, true]);
 		});
 
-		it('should evaluate a product against multiple rules', async () => {
+		it('should evaluate a product against multiple rules', () => {
 			const rules: Rule[] = [{ category: { eq: 'Electronics' } }, { price: { lt: 40 } }];
 
-			expect(await evaluator.evaluateRules(testProducts[0], rules)).toBe(true);
-			expect(await evaluator.evaluateRules(testProducts[2], rules)).toBe(true);
-			expect(await evaluator.evaluateRules(testProducts[1], rules)).toBe(false);
+			expect(evaluator.evaluateRules(testProducts[0], rules)).toBe(true);
+			expect(evaluator.evaluateRules(testProducts[2], rules)).toBe(true);
+			expect(evaluator.evaluateRules(testProducts[1], rules)).toBe(false);
 		});
 	});
 
 	describe('edge cases', () => {
-		it('should handle non-existent attributes', async () => {
-			const product: Product = {
+		it('should handle non-existent attributes', () => {
+			const product: Entity = {
 				id: '1',
 				name: 'Test Product',
 				attributes: {
@@ -312,11 +263,11 @@ describe('BaseRuleEvaluator', () => {
 				},
 			};
 			const rule: Rule = { nonexistent: { eq: 'value' } };
-			expect(await evaluator.evaluateRule(product, rule)).toBe(false);
+			expect(evaluator.evaluateRule(product, rule)).toBe(false);
 		});
 
-		it('should handle explicitly undefined attributes', async () => {
-			const product: Product = {
+		it('should handle explicitly undefined attributes', () => {
+			const product: Entity = {
 				id: '1',
 				name: 'Test Product',
 				attributes: {
@@ -325,11 +276,11 @@ describe('BaseRuleEvaluator', () => {
 				},
 			};
 			const rule: Rule = { category: { eq: 'Electronics' } };
-			expect(await evaluator.evaluateRule(product, rule)).toBe(false);
+			expect(evaluator.evaluateRule(product, rule)).toBe(false);
 		});
 
-		it('should handle attributes set to undefined via Object.defineProperty', async () => {
-			const product: Product = {
+		it('should handle attributes set to undefined via Object.defineProperty', () => {
+			const product: Entity = {
 				id: '1',
 				name: 'Test Product',
 				attributes: {
@@ -342,81 +293,81 @@ describe('BaseRuleEvaluator', () => {
 				enumerable: true,
 			});
 			const rule: Rule = { category: { eq: 'Electronics' } };
-			expect(await evaluator.evaluateRule(productWithUndefinedAttr, rule)).toBe(false);
+			expect(evaluator.evaluateRule(productWithUndefinedAttr, rule)).toBe(false);
 		});
 
-		it('should handle invalid operators', async () => {
+		it('should handle invalid operators', () => {
 			const invalidRule = {
 				price: { invalidOp: 100 } as any,
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], invalidRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], invalidRule)).toBe(false);
 		});
 
-		it('should handle empty rules', async () => {
+		it('should handle empty rules', () => {
 			const emptyRule = {};
-			expect(await evaluator.evaluateRule(testProducts[0], emptyRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], emptyRule)).toBe(false);
 		});
 
-		it('should handle empty AND/OR conditions', async () => {
+		it('should handle empty AND/OR conditions', () => {
 			const emptyAndRule = { and: [] };
 			const emptyOrRule = { or: [] };
-			expect(await evaluator.evaluateRule(testProducts[0], emptyAndRule)).toBe(true);
-			expect(await evaluator.evaluateRule(testProducts[0], emptyOrRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], emptyAndRule)).toBe(true);
+			expect(evaluator.evaluateRule(testProducts[0], emptyOrRule)).toBe(false);
 		});
 
-		it('should handle mixed valid and invalid operators', async () => {
+		it('should handle mixed valid and invalid operators', () => {
 			const mixedRule = {
 				price: {
 					gt: 1000,
 					invalidOp: 100,
 				} as any,
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], mixedRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], mixedRule)).toBe(false);
 		});
 
-		it('should handle non-numeric values in numeric comparisons', async () => {
+		it('should handle non-numeric values in numeric comparisons', () => {
 			const invalidNumericRule = {
 				price: { gt: '1000' as any },
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], invalidNumericRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], invalidNumericRule)).toBe(false);
 		});
 
-		it('should handle invalid array values in in/notIn operators', async () => {
+		it('should handle invalid array values in in/notIn operators', () => {
 			const invalidArrayRule = {
 				category: { in: 'Electronics' as any },
 			};
-			expect(await evaluator.evaluateRule(testProducts[0], invalidArrayRule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], invalidArrayRule)).toBe(false);
 		});
 
-		it('should handle empty batch evaluation', async () => {
+		it('should handle empty batch evaluation', () => {
 			const rule = {
 				price: {
 					gt: 1000,
 				},
 			};
-			expect(await evaluator.evaluateRuleBatch([], rule)).toEqual([]);
+			expect(evaluator.evaluateRuleBatch([], rule)).toEqual([]);
 		});
 
-		it('should handle unknown comparison operators', async () => {
+		it('should handle unknown comparison operators', () => {
 			const rule = {
 				price: {
 					unknown: 100,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle multiple operators with some invalid', async () => {
+		it('should handle multiple operators with some invalid', () => {
 			const rule = {
 				price: {
 					gt: 1000,
 					unknown: 100,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle all numeric comparison operators with type mismatches', async () => {
+		it('should handle all numeric comparison operators with type mismatches', () => {
 			const rule = {
 				price: {
 					gt: '1000' as any,
@@ -425,72 +376,72 @@ describe('BaseRuleEvaluator', () => {
 					lte: '1000' as any,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle array operators with non-array values', async () => {
+		it('should handle array operators with non-array values', () => {
 			const rule = {
 				category: {
 					in: 'electronics' as any,
 					notIn: 'clothing' as any,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle evaluateRules with empty rules array', async () => {
-			expect(await evaluator.evaluateRules(testProducts[0], [])).toBe(false);
+		it('should handle evaluateRules with empty rules array', () => {
+			expect(evaluator.evaluateRules(testProducts[0], [])).toBe(false);
 		});
 
-		it('should handle invalid operator types', async () => {
+		it('should handle invalid operator types', () => {
 			const rule = {
 				price: {
 					[Symbol('invalid') as any]: 100,
 					gt: 1000,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle non-string operator keys', async () => {
+		it('should handle non-string operator keys', () => {
 			const rule = {
 				price: {
 					[123 as any]: 100,
 					gt: 1000,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle undefined operator values', async () => {
+		it('should handle undefined operator values', () => {
 			const rule = {
 				price: {
 					gt: undefined as any,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle non-array values for array operators', async () => {
+		it('should handle non-array values for array operators', () => {
 			const rule = {
 				category: {
 					in: 123 as any,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should handle invalid values in array operators', async () => {
+		it('should handle invalid values in array operators', () => {
 			const rule = {
 				category: {
 					in: [Symbol('invalid')] as any,
 				} as any,
 			} as Rule;
-			expect(await evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
-		it('should call clear method', async () => {
-			await evaluator.clear();
+		it('should call clear method', () => {
+			evaluator.clear();
 		});
 	});
 });

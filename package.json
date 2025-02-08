@@ -1,6 +1,6 @@
 {
   "name": "@phr3nzy/rulekit",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A powerful and flexible toolkit for building rule-based matching and filtering systems",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
