@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-02-08
+
+### Improved
+
+- Enhanced CI/CD pipeline:
+  - Added comprehensive caching for faster builds:
+    - pnpm store caching for dependencies
+    - Coverage report caching
+    - Build output caching
+  - Improved workflow organization:
+    - Separated test and publish jobs
+    - Added proper job dependencies
+    - Enhanced concurrency handling
+  - Added Codecov integration:
+    - Detailed coverage reporting
+    - Coverage upload with proper configuration
+    - Fail CI on coverage regression
+
 ## [2.0.0] - 2025-02-07
 
 ### Changed
@@ -141,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code style enforcement
 - Automated testing and CI
 
+[2.0.1]: https://github.com/phr3nzy/rulekit/releases/tag/v2.0.1
 [2.0.0]: https://github.com/phr3nzy/rulekit/releases/tag/v2.0.0
 [1.1.1]: https://github.com/phr3nzy/rulekit/releases/tag/v1.1.1
 [1.1.0]: https://github.com/phr3nzy/rulekit/releases/tag/v1.1.0
