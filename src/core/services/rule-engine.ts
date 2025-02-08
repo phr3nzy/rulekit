@@ -55,6 +55,7 @@ export class RuleEngine {
 	 */
 	private getBatchSize(entities: Entity[], rules: Rule[]): number {
 		// Start with configured max batch size
+		const entityCount = entities.length;
 		let batchSize = this.config.maxBatchSize;
 
 		// Adjust based on rule complexity
@@ -75,7 +76,7 @@ export class RuleEngine {
 		if (ruleComplexity > 20) batchSize = Math.floor(batchSize / 4);
 
 		// Ensure minimum batch size
-		return Math.max(batchSize, 50);
+		return entityCount + batchSize;
 	}
 
 	/**
