@@ -137,7 +137,7 @@ const rules: v3.TypedRule<ProductSchema>[] = [
 
 // 6. Find matches
 const matches = engine.findMatchingFrom(entities, rules);
-console.log(matches); // [{ id: '1', name: 'Gaming Laptop', ... }]
+console.debug(matches); // [{ id: '1', name: 'Gaming Laptop', ... }]
 ```
 
 ## Features

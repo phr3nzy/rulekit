@@ -35,32 +35,32 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	private evaluateRule(entity: TypedEntity<TSchema>, rule: TypedRule<TSchema>): boolean {
 		// Validate entity against schema
 		if (!isValidSchemaObject(entity.attributes, this.schema)) {
-			console.log('Schema validation failed for entity:', entity);
+			console.debug('Schema validation failed for entity:', entity);
 			return false;
 		}
 
 		// Handle AND conditions
 		if (rule.and?.length) {
-			console.log('Evaluating AND conditions for entity:', entity.id);
+			console.debug('Evaluating AND conditions for entity:', entity.id);
 			const result = rule.and.every(subRule => this.evaluateRule(entity, subRule));
-			console.log('AND result:', result);
+			console.debug('AND result:', result);
 			return result;
 		}
 
 		// Handle OR conditions
 		if (rule.or?.length) {
-			console.log('Evaluating OR conditions for entity:', entity.id);
+			console.debug('Evaluating OR conditions for entity:', entity.id);
 			const result = rule.or.some(subRule => this.evaluateRule(entity, subRule));
-			console.log('OR result:', result);
+			console.debug('OR result:', result);
 			return result;
 		}
 
 		// Handle attribute conditions
 		if (rule.attributes) {
-			console.log('Evaluating attributes for entity:', entity.id);
+			console.debug('Evaluating attributes for entity:', entity.id);
 			return Object.entries(rule.attributes).every(([key, conditions]) => {
 				const value = entity.attributes[key];
-				console.log('Checking attribute:', key, 'value:', value, 'conditions:', conditions);
+				console.debug('Checking attribute:', key, 'value:', value, 'conditions:', conditions);
 				return Object.entries(conditions).every(([op, expected]) => {
 					let result: boolean;
 					switch (op) {
@@ -99,14 +99,14 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 						default:
 							result = false;
 					}
-					console.log('Operator:', op, 'Expected:', expected, 'Result:', result);
+					console.debug('Operator:', op, 'Expected:', expected, 'Result:', result);
 					return result;
 				});
 			});
 		}
 
 		// Empty rule or rule with empty attributes matches nothing
-		console.log('Empty rule for entity:', entity.id);
+		console.debug('Empty rule for entity:', entity.id);
 		return false;
 	}
 
