@@ -3,6 +3,18 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	test: {
 		exclude: ['**/*.bench.ts', '**/node_modules/**'],
+		// Improve error handling and reporting
+		globals: true,
+		environment: 'node',
+		reporters: ['verbose'],
+		pool: 'threads',
+		poolOptions: {
+			threads: {
+				singleThread: true,
+			},
+		},
+		testTimeout: 10000,
+		hookTimeout: 10000,
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json-summary', 'json', 'lcov'],

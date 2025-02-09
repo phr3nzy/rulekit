@@ -283,6 +283,104 @@ describe('UI Configuration Converter', () => {
 			});
 		});
 
+		it('should handle numeric operators with array values', () => {
+			const config: UIRuleConfiguration = {
+				matchingFrom: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IN,
+								type: UIComponentType.TEXT,
+							},
+						],
+						values: ['100', '200'],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.in]: ['100', '200'],
+					},
+				},
+			});
+		});
+
+		it('should handle numeric comparison operators with single value arrays', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								max: 100,
+							},
+						],
+					},
+					{
+						name: 'quantity',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								min: 50,
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+
+			// Test that numeric values are handled correctly
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.lte]: 100,
+					},
+				},
+			});
+
+			expect(result.fromRules[1]).toEqual({
+				attributes: {
+					quantity: {
+						[ComparisonOperators.gte]: 50,
+					},
+				},
+			});
+
+			// Test with array values
+			const configWithArrays: UIRuleConfiguration = {
+				matchingFrom: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IN,
+								type: UIComponentType.TEXT,
+							},
+						],
+						values: ['100', '200'],
+					},
+				],
+			};
+
+			const resultWithArrays = convertUIConfigurationToRules(configWithArrays);
+			expect(resultWithArrays.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.in]: ['100', '200'],
+					},
+				},
+			});
+		});
+
 		it('should handle null values in TEXT components', () => {
 			const config: UIRuleConfiguration = {
 				filters: [
@@ -488,6 +586,129 @@ describe('UI Configuration Converter', () => {
 			expect(() => validateUIConfiguration(config)).toThrow(
 				'To "test" must have at least one value',
 			);
+		});
+
+		it('should handle TEXT component with min value', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								min: 50,
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.gte]: 50,
+					},
+				},
+			});
+		});
+
+		it('should handle TEXT component with both min and max values', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								min: 50,
+								max: 100,
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.lte]: 100,
+					},
+				},
+			});
+		});
+
+		it('should handle non-TEXT component with min/max values', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'category',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.SELECT,
+								min: 1,
+								max: 5,
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					category: {
+						[ComparisonOperators.eq]: [5],
+					},
+				},
+			});
+		});
+
+		it('should handle TEXT component with numeric string values', () => {
+			const config: UIRuleConfiguration = {
+				filters: [
+					{
+						name: 'price',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								max: '100',
+							},
+						],
+					},
+					{
+						name: 'minPrice',
+						conditions: [
+							{
+								condition: UIConditionType.IS,
+								type: UIComponentType.TEXT,
+								min: '50',
+							},
+						],
+					},
+				],
+			};
+
+			const result = convertUIConfigurationToRules(config);
+			expect(result.fromRules[0]).toEqual({
+				attributes: {
+					price: {
+						[ComparisonOperators.lte]: 100,
+					},
+				},
+			});
+			expect(result.fromRules[1]).toEqual({
+				attributes: {
+					minPrice: {
+						[ComparisonOperators.gte]: 50,
+					},
+				},
+			});
 		});
 	});
 });

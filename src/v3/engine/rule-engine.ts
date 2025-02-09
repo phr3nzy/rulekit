@@ -105,9 +105,9 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 			});
 		}
 
-		// Empty rule matches everything
+		// Empty rule or rule with empty attributes matches nothing
 		console.log('Empty rule for entity:', entity.id);
-		return true;
+		return false;
 	}
 
 	/**
@@ -143,6 +143,16 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	 * Processes entities in optimally-sized batches
 	 */
 	private processBatch(entities: TypedEntity<TSchema>[], rules: TypedRule<TSchema>[]): boolean[] {
+		// Handle empty rules or rules with empty attributes
+		if (
+			!rules.length ||
+			rules.every(
+				rule => !rule.and && !rule.or && (!rule.attributes || !Object.keys(rule.attributes).length),
+			)
+		) {
+			return new Array(entities.length).fill(false);
+		}
+
 		const batchSize = this.getBatchSize(entities, rules);
 		const results = new Array(entities.length);
 		const batches = Math.ceil(entities.length / batchSize);

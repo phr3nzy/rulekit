@@ -81,6 +81,37 @@ describe('Rule Validation', () => {
 			expect(() => validateRule({ tags: { in: [Symbol('test')] } })).toThrow(RuleValidationError);
 		});
 
+		it('should validate arrays with mixed string and number values', () => {
+			// Array with both strings and numbers
+			expect(() => validateRule({ tags: { in: ['tag1', 123] } })).not.toThrow();
+			// Empty array
+			expect(() => validateRule({ tags: { in: [] } })).not.toThrow();
+			// Array with boolean values (should fail)
+			expect(() => validateRule({ tags: { in: [true, false] } })).toThrow(RuleValidationError);
+		});
+
+		it('should validate boolean values', () => {
+			const rule = {
+				isActive: { eq: true },
+				isEnabled: { eq: false },
+			};
+			expect(() => validateRule(rule)).not.toThrow();
+		});
+
+		it('should validate arrays with mixed string and number values', () => {
+			const rule = {
+				tags: { in: ['tag1', 123] },
+			};
+			expect(() => validateRule(rule)).not.toThrow();
+		});
+
+		it('should reject arrays with boolean values', () => {
+			const rule = {
+				tags: { in: [true, false] },
+			};
+			expect(() => validateRule(rule)).toThrow(RuleValidationError);
+		});
+
 		it('should reject non-numeric values for numeric operators', () => {
 			const numericOperators = ['gt', 'gte', 'lt', 'lte'];
 			for (const op of numericOperators) {

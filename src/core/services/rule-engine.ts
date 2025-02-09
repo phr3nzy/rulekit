@@ -83,6 +83,16 @@ export class RuleEngine {
 	 * Processes entities in optimally-sized batches
 	 */
 	private processBatch(entities: Entity[], rules: Rule[]): boolean[] {
+		// Handle empty rules or rules with empty attributes
+		if (
+			!rules.length ||
+			rules.every(
+				rule => !rule.and && !rule.or && (!rule.attributes || !Object.keys(rule.attributes).length),
+			)
+		) {
+			return new Array(entities.length).fill(false);
+		}
+
 		const batchSize = this.getBatchSize(entities, rules);
 		const results = new Array(entities.length);
 		const batches = Math.ceil(entities.length / batchSize);

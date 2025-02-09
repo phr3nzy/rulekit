@@ -188,7 +188,7 @@ describe('TypedRuleEngine', () => {
 			];
 
 			const matches = engine.findMatchingFrom(entities, [{}]);
-			expect(matches).toEqual(entities);
+			expect(matches).toEqual([]);
 		});
 
 		it('handles invalid entities', () => {
@@ -328,10 +328,204 @@ describe('TypedRuleEngine', () => {
 			const notInMatches = engine.findMatchingFrom(entities, notInRules);
 			expect(notInMatches).toHaveLength(0);
 		});
+
+		it('handles array operations with empty arrays', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, []),
+				createProduct('2', 'electronics', 200, true, ['tag']),
+			];
+
+			// Test 'in' operator with empty array
+			const inRules = [{ attributes: { tags: { in: [] } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(0);
+
+			// Test 'notIn' operator with empty array
+			const notInRules = [{ attributes: { tags: { notIn: [] } } }];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(2);
+		});
+
+		it('handles array operations with null/undefined values', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, ['tag1']),
+				createProduct('2', 'electronics', 200, true, ['tag2']),
+			];
+
+			// Test 'in' operator with null/undefined values
+			const inRules = [{ attributes: { tags: { in: [null, undefined] as any } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(0);
+
+			// Test 'notIn' operator with null/undefined values
+			const notInRules = [{ attributes: { tags: { notIn: [null, undefined] as any } } }];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(2);
+		});
+
+		it('handles array operations with mixed value types', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, ['tag1']),
+				createProduct('2', 'electronics', 200, true, ['tag2']),
+			];
+
+			// Test 'in' operator with mixed value types
+			const inRules = [{ attributes: { tags: { in: ['tag1', 123, null, undefined] as any } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(1);
+
+			// Test 'notIn' operator with mixed value types
+			const notInRules = [
+				{ attributes: { tags: { notIn: ['tag1', 123, null, undefined] as any } } },
+			];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(1);
+		});
+
+		it('handles array operations with object values', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, ['{"id":"nested1"}', '{"id":"nested2"}']),
+				createProduct('2', 'electronics', 200, true, ['{"id":"nested3"}']),
+			];
+
+			// Test 'in' operator with object values
+			const inRules = [{ attributes: { tags: { in: ['{"id":"nested1"}'] } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(1);
+
+			// Test 'notIn' operator with object values
+			const notInRules = [{ attributes: { tags: { notIn: ['{"id":"nested1"}'] } } }];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(1);
+		});
+
+		it('handles array operations with mixed array/non-array values', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, ['tag1', 'tag2']), // Array value
+				createProduct('2', 'electronics', 200, true, ['tag3']), // Array value
+			];
+
+			// Test array value with non-array expected
+			const nonArrayExpectedRules = [{ attributes: { tags: { in: 'tag1' as any } } }];
+			const nonArrayExpectedMatches = engine.findMatchingFrom(entities, nonArrayExpectedRules);
+			expect(nonArrayExpectedMatches).toHaveLength(0);
+
+			// Test non-array value with array expected
+			const arrayExpectedRules = [{ attributes: { category: { in: ['electronics'] } } }];
+			const arrayExpectedMatches = engine.findMatchingFrom(entities, arrayExpectedRules);
+			expect(arrayExpectedMatches).toHaveLength(2);
+		});
+
+		it('handles array operations with non-array value but array expected', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true), // Non-array value
+				createProduct('2', 'furniture', 200, true), // Non-array value
+			];
+
+			// Test non-array value with array expected for 'in'
+			const inRules = [{ attributes: { category: { in: ['electronics', 'furniture'] } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(2);
+
+			// Test non-array value with array expected for 'notIn'
+			const notInRules = [{ attributes: { category: { notIn: ['electronics', 'furniture'] } } }];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(0);
+		});
+
+		it('handles array operations with non-array values for both value and expected', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true), // Non-array value
+				createProduct('2', 'furniture', 200, true), // Non-array value
+			];
+
+			// Test non-array value with non-array expected for 'in'
+			const inRules = [{ attributes: { category: { in: 'electronics' as any } } }];
+			const inMatches = engine.findMatchingFrom(entities, inRules);
+			expect(inMatches).toHaveLength(0);
+
+			// Test non-array value with non-array expected for 'notIn'
+			const notInRules = [{ attributes: { category: { notIn: 'electronics' as any } } }];
+			const notInMatches = engine.findMatchingFrom(entities, notInRules);
+			expect(notInMatches).toHaveLength(0);
+		});
+
+		it('handles missing attributes', () => {
+			const entities = [
+				{
+					id: '1',
+					name: 'Test',
+					attributes: {
+						__validated: true,
+					},
+				} as TypedEntity<ProductSchema>,
+			];
+
+			const rules = [{ attributes: { category: { eq: 'electronics' } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(0);
+		});
 	});
 
 	describe('batch processing', () => {
 		const engine = new TypedRuleEngine(productSchema, { maxBatchSize: 10 });
+
+		it('handles very complex rules with batch size adjustments', () => {
+			// Create a very complex set of rules (complexity > 20)
+			const complexRules = [
+				{
+					or: [
+						{
+							and: [
+								{ attributes: { price: { gte: 0 } } },
+								{ attributes: { price: { lt: 100 } } },
+								{ attributes: { category: { eq: 'electronics' } } },
+								{ attributes: { inStock: { eq: true } } },
+							],
+						},
+						{
+							and: [
+								{ attributes: { price: { gte: 100 } } },
+								{ attributes: { price: { lt: 200 } } },
+								{ attributes: { category: { eq: 'furniture' } } },
+								{ attributes: { inStock: { eq: true } } },
+							],
+						},
+					],
+				},
+				{
+					or: [
+						{
+							and: [
+								{ attributes: { price: { gte: 200 } } },
+								{ attributes: { price: { lt: 300 } } },
+								{ attributes: { category: { eq: 'electronics' } } },
+								{ attributes: { inStock: { eq: true } } },
+							],
+						},
+						{
+							and: [
+								{ attributes: { price: { gte: 300 } } },
+								{ attributes: { price: { lt: 400 } } },
+								{ attributes: { category: { eq: 'furniture' } } },
+								{ attributes: { inStock: { eq: true } } },
+							],
+						},
+					],
+				},
+			];
+
+			// Create entities that should match the rules
+			const entities = [
+				createProduct('1', 'electronics', 50, true),
+				createProduct('2', 'furniture', 150, true),
+				createProduct('3', 'electronics', 250, true),
+				createProduct('4', 'furniture', 350, true),
+			];
+
+			const matches = engine.findMatchingFrom(entities, complexRules);
+			expect(matches.length).toBeGreaterThan(0);
+		});
 
 		it('handles complex rules with batch size adjustments', () => {
 			// Create a simpler set of complex rules
@@ -392,6 +586,17 @@ describe('TypedRuleEngine', () => {
 			);
 
 			const matches = engine.findMatchingFrom(entities, []);
+			expect(matches).toHaveLength(0);
+		});
+
+		it('handles rules with empty attributes', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true),
+				createProduct('2', 'furniture', 200, true),
+			];
+
+			const rules = [{ attributes: {} }];
+			const matches = engine.findMatchingFrom(entities, rules);
 			expect(matches).toHaveLength(0);
 		});
 	});

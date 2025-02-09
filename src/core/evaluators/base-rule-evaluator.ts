@@ -141,8 +141,14 @@ export class BaseRuleEvaluator implements RuleEvaluator {
 				case 'ne':
 					return !set.has(value as string | number);
 				case 'in':
+					if (Array.isArray(value)) {
+						return value.some(v => set.has(v as string | number));
+					}
 					return set.has(value as string | number);
 				case 'notIn':
+					if (Array.isArray(value)) {
+						return value.every(v => !set.has(v as string | number));
+					}
 					return !set.has(value as string | number);
 			}
 		}

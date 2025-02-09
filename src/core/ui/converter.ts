@@ -288,7 +288,7 @@ export function convertUIConfigurationToRules(config: UIRuleConfiguration): {
  *
  * try {
  *   validateUIConfiguration(config);
- *   console.log('Configuration is valid');
+ *   console.debug('Configuration is valid');
  * } catch (error) {
  *   if (error instanceof UIConfigurationError) {
  *     console.error('Invalid configuration:', error.message);

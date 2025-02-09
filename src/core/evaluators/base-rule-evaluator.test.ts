@@ -403,6 +403,25 @@ describe('BaseRuleEvaluator', () => {
 			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
 		});
 
+		it('should handle filters with Symbol keys', () => {
+			const symbolKey = Symbol('test');
+			const rule = {
+				price: {
+					[symbolKey]: 100,
+					eq: 1200,
+				} as any,
+			} as Rule;
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+
+			// Test with only Symbol key
+			const symbolOnlyRule = {
+				price: {
+					[symbolKey]: 100,
+				} as any,
+			} as Rule;
+			expect(evaluator.evaluateRule(testProducts[0], symbolOnlyRule)).toBe(false);
+		});
+
 		it('should handle non-string operator keys', () => {
 			const rule = {
 				price: {
@@ -411,6 +430,25 @@ describe('BaseRuleEvaluator', () => {
 				} as any,
 			} as Rule;
 			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+		});
+
+		it('should handle Symbol keys in filter', () => {
+			const symbolKey = Symbol('test');
+			const rule = {
+				price: {
+					[symbolKey]: 100,
+					gt: 1000,
+				} as any,
+			} as Rule;
+			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+
+			// Test with only Symbol key
+			const symbolOnlyRule = {
+				price: {
+					[symbolKey]: 100,
+				} as any,
+			} as Rule;
+			expect(evaluator.evaluateRule(testProducts[0], symbolOnlyRule)).toBe(false);
 		});
 
 		it('should handle undefined operator values', () => {
@@ -477,6 +515,57 @@ describe('BaseRuleEvaluator', () => {
 				} as any,
 			} as Rule;
 			expect(evaluator.evaluateRule(testProducts[0], rule)).toBe(false);
+		});
+
+		it('should handle array values with array target for ne operator', () => {
+			const productWithArrayValue: Entity = {
+				id: '1',
+				name: 'Test Product',
+				attributes: {
+					tags: ['tag1', 'tag2'],
+					__validated: true,
+				},
+			};
+
+			const rule: Rule = {
+				tags: { ne: ['tag3', 'tag4'] },
+			};
+
+			expect(evaluator.evaluateRule(productWithArrayValue, rule)).toBe(true);
+		});
+
+		it('should handle array values with array target for in operator', () => {
+			const productWithArrayValue: Entity = {
+				id: '1',
+				name: 'Test Product',
+				attributes: {
+					tags: ['tag1', 'tag2'],
+					__validated: true,
+				},
+			};
+
+			const rule: Rule = {
+				tags: { in: ['tag1', 'tag3'] },
+			};
+
+			expect(evaluator.evaluateRule(productWithArrayValue, rule)).toBe(true);
+		});
+
+		it('should handle array values with array target for notIn operator', () => {
+			const productWithArrayValue: Entity = {
+				id: '1',
+				name: 'Test Product',
+				attributes: {
+					tags: ['tag1', 'tag2'],
+					__validated: true,
+				},
+			};
+
+			const rule: Rule = {
+				tags: { notIn: ['tag3', 'tag4'] },
+			};
+
+			expect(evaluator.evaluateRule(productWithArrayValue, rule)).toBe(true);
 		});
 
 		it('should call clear method', () => {

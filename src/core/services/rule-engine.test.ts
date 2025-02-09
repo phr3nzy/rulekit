@@ -132,15 +132,17 @@ describe('RuleEngine', () => {
 		it('should handle extremely complex rules that reduce batch size further', () => {
 			// Create an even more complex rule to trigger maximum batch size reduction
 			const complexRule: Rule = {
-				and: Array.from({ length: 10 }, () => ({
-					or: Array.from({ length: 10 }, () => ({
-						attributes: {
-							category: { eq: 'Electronics' },
-							price: { gt: 1000 },
-							brand: { eq: 'TechBrand' },
-							color: { eq: 'blue' },
-							weight: { eq: 50 },
-						},
+				and: Array.from({ length: 15 }, () => ({
+					or: Array.from({ length: 15 }, () => ({
+						and: Array.from({ length: 5 }, () => ({
+							attributes: {
+								category: { eq: 'Electronics' },
+								price: { gt: 1000 },
+								brand: { eq: 'TechBrand' },
+								color: { eq: 'blue' },
+								weight: { eq: 50 },
+							},
+						})),
 					})),
 				})),
 			};
@@ -169,6 +171,19 @@ describe('RuleEngine', () => {
 			expect(toEntities.map(e => e.id).sort()).toEqual(['3', '5']); // Wireless Mouse and Keyboard
 		});
 
+		it('should handle duplicate source entities correctly', () => {
+			const fromEntities = [testEntities[0], testEntities[0]]; // Duplicate Laptop
+			const toRules: Rule[] = [
+				{
+					attributes: { category: { eq: 'Accessories' } },
+				},
+			];
+
+			const toEntities = engine.findMatchingTo(fromEntities, toRules, testEntities);
+			expect(toEntities).toHaveLength(3);
+			expect(toEntities.map(e => e.id).sort()).toEqual(['2', '3', '5']); // All accessories
+		});
+
 		it('should handle price range matching', () => {
 			const fromEntities = [testEntities[0]]; // Laptop
 			const toRules: Rule[] = [
@@ -184,6 +199,91 @@ describe('RuleEngine', () => {
 
 			expect(toEntities).toHaveLength(3);
 			expect(toEntities.map(e => e.id).sort()).toEqual(['2', '3', '5']); // All accessories
+		});
+	});
+
+	describe('batch processing', () => {
+		it('should handle custom batch size configuration', () => {
+			const customEngine = new RuleEngine({ maxBatchSize: 2 });
+			const rules: Rule[] = [
+				{
+					attributes: { category: { eq: 'Electronics' } },
+				},
+			];
+
+			const fromEntities = customEngine.findMatchingFrom(testEntities, rules);
+			expect(fromEntities).toHaveLength(2);
+			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '4']); // Laptop and Desktop PC
+		});
+
+		it('should handle empty entity list', () => {
+			const rules: Rule[] = [
+				{
+					attributes: { category: { eq: 'Electronics' } },
+				},
+			];
+
+			const fromEntities = engine.findMatchingFrom([], rules);
+			expect(fromEntities).toHaveLength(0);
+		});
+
+		it('should handle rules with only attributes', () => {
+			const rules: Rule[] = [
+				{
+					attributes: {
+						category: { eq: 'Electronics' },
+						price: { gt: 1000 },
+					},
+				},
+			];
+
+			const fromEntities = engine.findMatchingFrom(testEntities, rules);
+			expect(fromEntities).toHaveLength(2);
+			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '4']); // Laptop and Desktop PC
+		});
+
+		it('should handle rules with no conditions', () => {
+			const rules: Rule[] = [
+				{
+					attributes: {},
+				},
+			];
+
+			const fromEntities = engine.findMatchingFrom(testEntities, rules);
+			expect(fromEntities).toHaveLength(0);
+		});
+
+		it('should handle rules with no attributes property', () => {
+			const rules: Rule[] = [
+				{} as Rule, // Empty rule with no attributes property
+			];
+
+			const fromEntities = engine.findMatchingFrom(testEntities, rules);
+			expect(fromEntities).toHaveLength(0);
+		});
+
+		it('should handle rules with mixed complexity', () => {
+			const rules: Rule[] = [
+				{
+					and: [
+						{ attributes: { category: { eq: 'Electronics' } } },
+						{ attributes: { price: { gt: 1000 } } },
+					],
+				},
+				{
+					or: [
+						{ attributes: { brand: { eq: 'TechBrand' } } },
+						{ attributes: { color: { eq: 'blue' } } },
+					],
+				},
+				{
+					attributes: { weight: { eq: 50 } },
+				},
+			];
+
+			const fromEntities = engine.findMatchingFrom(testEntities, rules);
+			expect(fromEntities).toHaveLength(2);
+			expect(fromEntities.map(e => e.id).sort()).toEqual(['1', '4']); // Laptop and Desktop PC
 		});
 	});
 

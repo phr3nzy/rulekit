@@ -71,17 +71,32 @@ export async function validateAttribute(
 		throw new AttributeValidationError(name, 'Value is required');
 	}
 
-	// Run custom validation first if it exists, as it might have special handling for undefined values
+	// Run custom validation first if it exists and either:
+	// 1. The attribute is required, OR
+	// 2. The value is provided, OR
+	// 3. The validation depends on other attributes
 	if (validation.custom) {
-		const isValid = await validation.custom(value, allAttributes);
-		if (!isValid) {
-			throw new AttributeValidationError(name, 'Custom validation failed');
+		try {
+			const isValid = await validation.custom(value, allAttributes);
+			if (!isValid) {
+				throw new Error('Custom validation failed');
+			}
+		} catch (error) {
+			if (error instanceof AttributeValidationError) {
+				throw error;
+			}
+			throw new AttributeValidationError(
+				name,
+				error instanceof Error ? error.message : error?.toString() || 'Custom validation failed',
+			);
 		}
 	}
 
 	// Skip remaining validations if value is not provided and not required
 	if (value === undefined || value === null) {
-		return;
+		if (!validation.required) {
+			return;
+		}
 	}
 
 	// Type validation
@@ -199,6 +214,7 @@ function validateString(name: string, value: string, validation: ValidationRule)
 		throw new AttributeValidationError(name, `String length must be at most ${validation.max}`);
 	}
 
+	// Pattern validation - need to replace REGEX with something faster and more accurate and efficient! so the pattern will be always a search string and we then find
 	if (validation.pattern) {
 		const regex = new RegExp(validation.pattern);
 		if (!regex.test(value)) {

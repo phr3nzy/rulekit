@@ -125,7 +125,7 @@ const uiConfig = {
  * ```typescript
  * try {
  *   const result = await runExample();
- *   console.log('Matching entities:', result);
+ *   console.debug('Matching entities:', result);
  * } catch (error) {
  *   console.error('Example failed:', error);
  * }
@@ -158,8 +158,8 @@ async function runExample() {
 			entities,
 		);
 
-		console.log('Matching From:', result.fromEntities);
-		console.log('Matching To:', result.toEntities);
+		console.debug('Matching From:', result.fromEntities);
+		console.debug('Matching To:', result.toEntities);
 
 		return result;
 	} catch (error) {

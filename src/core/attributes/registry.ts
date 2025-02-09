@@ -85,7 +85,7 @@ export class ProductAttributeRegistry {
 	 * ```typescript
 	 * const priceDef = registry.getAttribute('price');
 	 * if (priceDef) {
-	 *   console.log(`Price validation: ${JSON.stringify(priceDef.validation)}`);
+	 *   console.debug(`Price validation: ${JSON.stringify(priceDef.validation)}`);
 	 * }
 	 * ```
 	 */
@@ -103,7 +103,7 @@ export class ProductAttributeRegistry {
 	 * @example
 	 * ```typescript
 	 * if (registry.removeAttribute('oldField')) {
-	 *   console.log('Old field definition removed');
+	 *   console.debug('Old field definition removed');
 	 * }
 	 * ```
 	 */
@@ -120,7 +120,7 @@ export class ProductAttributeRegistry {
 	 * @example
 	 * ```typescript
 	 * const allAttributes = registry.getAllAttributes();
-	 * console.log(`Registered attributes: ${allAttributes.map(a => a.name).join(', ')}`);
+	 * console.debug(`Registered attributes: ${allAttributes.map(a => a.name).join(', ')}`);
 	 * ```
 	 */
 	public getAllAttributes(): AttributeDefinition[] {
@@ -150,7 +150,7 @@ export class ProductAttributeRegistry {
 	 *     category: 'electronics',
 	 *     inStock: true
 	 *   });
-	 *   console.log('Attributes are valid');
+	 *   console.debug('Attributes are valid');
 	 * } catch (error) {
 	 *   console.error('Validation failed:', error.message);
 	 * }
@@ -166,8 +166,17 @@ export class ProductAttributeRegistry {
 				throw new Error(`Missing required attribute: ${name}`);
 			}
 
-			// Add custom validations for all registered attributes
-			if (definition.validation.custom) {
+			// Add custom validations for:
+			// 1. Required attributes
+			// 2. Provided attributes
+			// 3. Optional attributes with custom validation when their dependencies are present
+			if (
+				definition.validation.custom &&
+				(definition.validation.required ||
+					name in attributes ||
+					(definition.validation.custom.toString().includes('attributes?.') &&
+						Object.keys(attributes).length > 0)) // Run custom validation if it depends on other attributes
+			) {
 				const value = attributes[name];
 				customValidationPromises.push(validateAttribute(name, value, definition, attributes));
 			}

@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ProductAttributeRegistry } from '../attributes/registry';
 import { AttributeType } from '../attributes/types';
-import type { Product } from './types';
+
+export interface Product {
+	id: string;
+	name: string;
+	attributes: Record<string, unknown>;
+}
 
 describe('Product with Dynamic Attributes', () => {
 	let registry: ProductAttributeRegistry;
