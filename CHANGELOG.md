@@ -5,6 +5,72 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2025-02-16
+
+### Added
+
+- New interface-agnostic component system that can be used across different interfaces (web, terminal, etc.)
+- Data analysis system that automatically suggests appropriate components based on data characteristics
+- Generic adapter system for converting components to different interface implementations
+- Smart component suggestion based on data type and statistics
+- Comprehensive statistics generation for numeric and categorical data
+- Support for range, choice, multi-select, and input components
+- Type-safe component handling with proper TypeScript support
+- Backward compatibility with existing UI configuration through converters
+
+### Changed
+
+- Refactored UI subsystem to be interface-agnostic
+- Improved type safety across the entire codebase
+- Enhanced rule conversion with support for more comparison operators
+- Better handling of numeric ranges and categorical data
+- More flexible component constraints and validation
+
+### Deprecated
+
+- UI-specific components (UIConditionType, UIComponentType, etc.)
+- UI configuration converter
+- UI example implementation
+
+### Migration Note
+
+The old UI-specific components are now deprecated in favor of the new interface-agnostic system. While the old components will continue to work in this version, they will be removed in a future major release. We recommend migrating to the new system which provides better type safety and more flexibility.
+
+Example migration:
+
+```typescript
+// Before
+import { UIComponentType, UIConditionType } from '@phr3nzy/rulekit';
+
+const component = {
+	type: UIComponentType.RANGE,
+	field: 'price',
+	value: [0, 1000],
+};
+
+// After
+import { ComponentType } from '@phr3nzy/rulekit';
+
+const component = {
+	type: ComponentType.RANGE,
+	identifier: 'price',
+	value: 500,
+	constraints: {
+		min: 0,
+		max: 1000,
+		step: 1,
+	},
+};
+```
+
+The new system provides:
+
+- Better type safety with proper TypeScript support
+- More flexible component constraints
+- Automatic component suggestions based on data analysis
+- Support for different interface implementations
+- Enhanced validation and error handling
+
 ## [3.1.0] - 2025-02-16
 
 ### Changed

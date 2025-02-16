@@ -1,35 +1,48 @@
-/**
- * RuleKit - A powerful and flexible toolkit for building rule-based matching and filtering systems
- * @packageDocumentation
- */
+// Core exports
+export type {
+	Entity,
+	Rule,
+	RuleSet,
+	MatchingConfig,
+	ComparisonOperator,
+	RuleValue,
+	BaseFilter,
+} from './core/models/types';
+export { ComparisonOperators } from './core/models/types';
+export * from './core/models/validation';
+export { RuleEngine } from './core/services/rule-engine';
+export * from './core/attributes/types';
+export * from './core/attributes/registry';
+export * from './core/attributes/validator';
+export * from './core/evaluators/types';
+export * from './core/evaluators/base-rule-evaluator';
 
-// Main exports (v3 type-safe API)
+// Interface-agnostic components exports
+export * from './core/interface/components/types';
+export { InterfaceOperators } from './core/interface/components/operators';
+export * from './core/interface/adapters/types';
+export * from './core/interface/converters/rule-converter';
+
+// Data analysis exports
+export * from './core/analysis/types';
+export * from './core/analysis/analyzer';
+
+// Legacy UI exports (deprecated)
+/** @deprecated Use interface-agnostic components instead */
+export * from './core/ui/types';
+/** @deprecated Use interface-agnostic components instead */
+export * from './core/ui/converter';
+
+// V3 exports
 export * from './v3';
 
-// Legacy v2 exports (for backward compatibility)
-import * as v2Types from './core/models/types';
-import * as v2Validation from './core/models/validation';
-import * as v2AttributeTypes from './core/attributes/types';
-import * as v2AttributeRegistry from './core/attributes/registry';
-import * as v2AttributeValidator from './core/attributes/validator';
-import * as v2EvaluatorTypes from './core/evaluators/types';
-import * as v2RuleEvaluator from './core/evaluators/base-rule-evaluator';
-import * as v2RuleEngine from './core/services/rule-engine';
-import * as v2UiTypes from './core/ui/types';
-import * as v2UiConverter from './core/ui/converter';
-import * as v2UiExample from './core/ui/example';
+// Legacy v2 namespace export
+import * as validation from './core/models/validation';
+import { RuleEngine as Engine } from './core/services/rule-engine';
+import { ComparisonOperators as CoreOperators } from './core/models/types';
 
-// Export v2 as a namespace for legacy users
 export const v2 = {
-	...v2Types,
-	validation: v2Validation,
-	attributeTypes: v2AttributeTypes,
-	attributeRegistry: v2AttributeRegistry,
-	attributeValidator: v2AttributeValidator,
-	evaluatorTypes: v2EvaluatorTypes,
-	ruleEvaluator: v2RuleEvaluator,
-	ruleEngine: v2RuleEngine,
-	uiTypes: v2UiTypes,
-	uiConverter: v2UiConverter,
-	uiExample: v2UiExample,
+	ruleEngine: Engine,
+	validation,
+	ComparisonOperators: CoreOperators,
 };

@@ -16,6 +16,7 @@ export default defineConfig({
 				'dist/**',
 				'coverage/**',
 				'**/*.config.*',
+				'examples/**',
 			],
 			all: true,
 			clean: true,

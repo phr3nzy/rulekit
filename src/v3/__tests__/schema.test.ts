@@ -4,8 +4,8 @@ import {
 	isValidAttributeValue,
 	isValidSchemaObject,
 	type AttributeSchema,
-	type TypedEntity,
-	type TypedRule,
+	type Entity,
+	type Rule,
 } from '../types/schema';
 
 describe('Schema Type System', () => {
@@ -245,7 +245,7 @@ describe('Schema Type System', () => {
 
 		// Type tests (these will be checked by TypeScript compiler)
 		it('provides type safety for entity creation', () => {
-			const entity: TypedEntity<TestSchema> = {
+			const entity: Entity<TestSchema> = {
 				id: 'test-1',
 				name: 'Test Entity',
 				attributes: {
@@ -263,7 +263,7 @@ describe('Schema Type System', () => {
 		});
 
 		it('provides type safety for rule creation', () => {
-			const rule: TypedRule<TestSchema> = {
+			const rule: Rule<TestSchema> = {
 				and: [
 					{
 						attributes: {
