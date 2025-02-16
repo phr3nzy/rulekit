@@ -2,12 +2,11 @@ import { RuleEngine } from '../../src';
 import { DataAnalyzer } from '../../src/core/analysis/analyzer';
 import { RuleConverter } from '../../src/core/interface/converters/rule-converter';
 import { ComponentType } from '../../src/core/interface/components/types';
-import type { DataAnalysis } from '../../src/core/analysis/types';
 import type { Entity } from '../../src/core/models/types';
 import type { Component } from '../../src/core/interface/components/types';
 
 // Use Record<string, unknown> to make it compatible with DynamicAttributes
-type ProductAttributes = Record<string, unknown> & {
+type ProductAttributes = {
 	category: string;
 	price: number;
 	tags: string[];
@@ -62,7 +61,7 @@ const products: Entity[] = [
 
 // Step 1: Analyze data to get smart component suggestions
 const analyzer = new DataAnalyzer();
-const analysis = analyzer.analyze(products.map(p => p.attributes)) as DataAnalysis;
+const analysis = analyzer.analyze(products.map(p => p.attributes));
 
 console.log('\n=== Data Analysis Results ===');
 Object.entries(analysis).forEach(([field, fieldAnalysis]) => {
