@@ -2,7 +2,7 @@ import { bench, describe } from 'vitest';
 import { v2 } from '../../index';
 import type { Entity, Rule } from '../models/types';
 
-const { RuleEngine } = v2.ruleEngine;
+const RuleEngine = v2.ruleEngine;
 
 /**
  * Type-safe product categories for consistent testing
