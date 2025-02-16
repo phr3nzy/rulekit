@@ -13,6 +13,8 @@ A powerful and flexible toolkit for building rule-based matching and filtering s
 - 📦 **Zero Dependencies**: Lightweight and efficient
 - 🔒 **Validation**: Built-in schema validation
 - 🔄 **Batch Processing**: Optimized for large datasets
+- 🎨 **Interface Agnostic**: Flexible component system for any UI
+- 📚 **Well Organized**: Clean, documented exports with proper versioning
 
 ## Installation
 
@@ -25,6 +27,26 @@ yarn add @phr3nzy/rulekit
 
 # Using pnpm
 pnpm add @phr3nzy/rulekit
+```
+
+## Exports Overview
+
+RuleKit provides a well-organized export structure:
+
+```typescript
+// Core functionality
+import { RuleEngine, AttributeType } from '@phr3nzy/rulekit';
+import type { Entity, Rule, RuleSet } from '@phr3nzy/rulekit';
+
+// Interface-agnostic components
+import { ComponentType, InterfaceOperators } from '@phr3nzy/rulekit';
+import type { Component, ComponentConstraints } from '@phr3nzy/rulekit';
+
+// Data analysis
+import { Analyzer, type DataStatistics } from '@phr3nzy/rulekit';
+
+// Legacy v2 functionality (if needed)
+import { v2 } from '@phr3nzy/rulekit';
 ```
 
 ## Quick Start (v3)

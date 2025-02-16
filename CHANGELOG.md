@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2025-02-16
+
+### Improved
+
+- Enhanced export organization:
+  - Better grouping of related exports
+  - Improved JSDoc documentation
+  - Clearer deprecation notices
+  - Separated v2 legacy exports into dedicated file
+
+### Changed
+
+- Moved v2 namespace to dedicated file for better maintainability
+- Enhanced type exports organization
+- Improved code organization and documentation
+- Better separation of concerns between v2 and v3 exports
+
+### Documentation
+
+- Added comprehensive JSDoc documentation for all exports
+- Improved type documentation and examples
+- Enhanced deprecation notices with migration guidance
+- Updated export structure documentation
+
 ## [3.2.0] - 2025-02-16
 
 ### Added
