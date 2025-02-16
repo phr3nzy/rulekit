@@ -1,4 +1,9 @@
-// Core exports
+/**
+ * RuleKit - A type-safe rule engine for entity matching and filtering
+ * @packageDocumentation
+ */
+
+// Core type exports
 export type {
 	Entity,
 	Rule,
@@ -8,12 +13,18 @@ export type {
 	RuleValue,
 	BaseFilter,
 } from './core/models/types';
+
+// Core functionality exports
 export { ComparisonOperators } from './core/models/types';
 export * from './core/models/validation';
 export { RuleEngine } from './core/services/rule-engine';
+
+// Attribute system exports
 export * from './core/attributes/types';
 export * from './core/attributes/registry';
 export * from './core/attributes/validator';
+
+// Rule evaluation exports
 export * from './core/evaluators/types';
 export * from './core/evaluators/base-rule-evaluator';
 
@@ -27,22 +38,15 @@ export * from './core/interface/converters/rule-converter';
 export * from './core/analysis/types';
 export * from './core/analysis/analyzer';
 
-// Legacy UI exports (deprecated)
-/** @deprecated Use interface-agnostic components instead */
+/**
+ * @deprecated Use interface-agnostic components instead
+ * These exports will be removed in the next major version
+ */
 export * from './core/ui/types';
-/** @deprecated Use interface-agnostic components instead */
 export * from './core/ui/converter';
 
-// V3 exports
+// V3 exports (latest version)
 export * from './v3';
 
 // Legacy v2 namespace export
-import * as validation from './core/models/validation';
-import { RuleEngine as Engine } from './core/services/rule-engine';
-import { ComparisonOperators as CoreOperators } from './core/models/types';
-
-export const v2 = {
-	ruleEngine: Engine,
-	validation,
-	ComparisonOperators: CoreOperators,
-};
+export { v2 } from './v2';
