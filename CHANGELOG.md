@@ -33,7 +33,7 @@ import { v3 } from '@phr3nzy/rulekit';
 const { TypedRuleEngine } = v3;
 
 // After
-import { TypedRuleEngine } from '@phr3nzy/rulekit';
+import { RuleEngine } from '@phr3nzy/rulekit';
 ```
 
 Legacy v2 functionality remains available through the v2 namespace:
@@ -68,7 +68,7 @@ const { RuleEngine } = v2.ruleEngine;
 
 ### Breaking Changes
 
-- New v3 API uses different import path (`import { v3 } from '@phr3nzy/rulekit'`)
+- New v3 API is now available at root level
 - Type-safe schemas require explicit type definitions
 - Array conditions now support both element and array-level matching
 - Rule evaluation now validates against schema types
@@ -89,15 +89,14 @@ const { RuleEngine } = v2.ruleEngine;
 import { RuleEngine } from '@phr3nzy/rulekit';
 
 // After (v3)
-import { v3 } from '@phr3nzy/rulekit';
-const { TypedRuleEngine } = v3;
+import { RuleEngine, AttributeType } from '@phr3nzy/rulekit';
 ```
 
 #### 2. Define Type-Safe Schema
 
 ```typescript
-import { v3 } from '@phr3nzy/rulekit';
-const { AttributeType } = v3;
+import { AttributeType } from '@phr3nzy/rulekit';
+import type { AttributeSchema } from '@phr3nzy/rulekit';
 
 // Define your schema with type safety
 type ProductSchema = {
@@ -117,7 +116,7 @@ type ProductSchema = {
 			min: 0;
 		};
 	};
-} & v3.AttributeSchema;
+} & AttributeSchema;
 ```
 
 #### 3. Create Type-Safe Engine
@@ -144,14 +143,14 @@ const productSchema: ProductSchema = {
 };
 
 // Create type-safe engine
-const engine = new TypedRuleEngine(productSchema);
+const engine = new RuleEngine(productSchema);
 ```
 
 #### 4. Use Type-Safe Rules
 
 ```typescript
 // Rules are now type-checked
-const rules: v3.TypedRule<ProductSchema>[] = [
+const rules: Rule<ProductSchema>[] = [
 	{
 		attributes: {
 			category: { eq: 'electronics' }, // Type-safe: must be one of the enum values
@@ -161,7 +160,7 @@ const rules: v3.TypedRule<ProductSchema>[] = [
 ];
 
 // Entities are type-checked
-const entities: v3.TypedEntity<ProductSchema>[] = [
+const entities: Entity<ProductSchema>[] = [
 	{
 		id: '1',
 		name: 'Laptop',
@@ -200,14 +199,15 @@ const rule2 = {
 
 ### Backward Compatibility
 
-V2 exports are still available for backward compatibility:
+V2 exports are still available through the v2 namespace:
 
 ```typescript
-// V2 imports still work
+// Before
 import { RuleEngine } from '@phr3nzy/rulekit';
 
-// V3 recommended imports
-import { v3 } from '@phr3nzy/rulekit';
+// After
+import { v2 } from '@phr3nzy/rulekit';
+const { RuleEngine } = v2.ruleEngine;
 ```
 
 ## [2.0.2] - 2025-02-08

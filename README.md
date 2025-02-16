@@ -30,8 +30,7 @@ pnpm add @phr3nzy/rulekit
 ## Quick Start (v3)
 
 ```typescript
-import { v3 } from '@phr3nzy/rulekit';
-const { AttributeType, TypedRuleEngine } = v3;
+import { AttributeType, RuleEngine } from '@phr3nzy/rulekit';
 
 // 1. Define your schema
 type ProductSchema = {
@@ -59,7 +58,7 @@ type ProductSchema = {
 			required: false;
 		};
 	};
-} & v3.AttributeSchema;
+} & AttributeSchema;
 
 // 2. Create schema instance
 const productSchema: ProductSchema = {
@@ -90,10 +89,10 @@ const productSchema: ProductSchema = {
 };
 
 // 3. Create engine
-const engine = new TypedRuleEngine(productSchema);
+const engine = new RuleEngine(productSchema);
 
 // 4. Define entities
-const entities: v3.TypedEntity<ProductSchema>[] = [
+const entities: Entity<ProductSchema>[] = [
 	{
 		id: '1',
 		name: 'Gaming Laptop',
@@ -117,7 +116,7 @@ const entities: v3.TypedEntity<ProductSchema>[] = [
 ];
 
 // 5. Define rules
-const rules: v3.TypedRule<ProductSchema>[] = [
+const rules: Rule<ProductSchema>[] = [
 	{
 		and: [
 			{
@@ -145,32 +144,32 @@ console.log(matches); // [{ id: '1', name: 'Gaming Laptop', ... }]
 ### Type-Safe Schema Definition
 
 ```typescript
-import { v3 } from '@phr3nzy/rulekit';
+import { AttributeType } from '@phr3nzy/rulekit';
 
 type UserSchema = {
 	role: {
-		type: typeof v3.AttributeType.ENUM;
+		type: typeof AttributeType.ENUM;
 		validation: {
-			type: typeof v3.AttributeType.ENUM;
+			type: typeof AttributeType.ENUM;
 			required: true;
 			enum: ['admin', 'user', 'guest'];
 		};
 	};
 	permissions: {
-		type: typeof v3.AttributeType.ARRAY;
+		type: typeof AttributeType.ARRAY;
 		validation: {
-			type: typeof v3.AttributeType.ARRAY;
-			arrayType: typeof v3.AttributeType.STRING;
+			type: typeof AttributeType.ARRAY;
+			arrayType: typeof AttributeType.STRING;
 			required: true;
 		};
 	};
-} & v3.AttributeSchema;
+} & AttributeSchema;
 ```
 
 ### Complex Rule Combinations
 
 ```typescript
-const rules: v3.TypedRule<UserSchema>[] = [
+const rules: Rule<UserSchema>[] = [
 	{
 		or: [
 			{
@@ -216,7 +215,7 @@ const rule2 = {
 
 ```typescript
 // Engine automatically optimizes batch size based on rule complexity
-const engine = new v3.TypedRuleEngine(schema, {
+const engine = new RuleEngine(schema, {
 	maxBatchSize: 1000, // Optional: customize batch size
 });
 
