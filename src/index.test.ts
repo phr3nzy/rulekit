@@ -41,12 +41,12 @@ describe('Package exports', () => {
 
 	describe('v3', () => {
 		it('should export type-safe API', () => {
-			expect(v3.TypedRuleEngine).toBeDefined();
+			expect(v3.RuleEngine).toBeDefined();
 			expect(v3.AttributeType).toBeDefined();
 		});
 
 		it('should export schema types', () => {
-			expect(v3.TypedComparisonOperators).toEqual({
+			expect(v3.ComparisonOperators).toEqual({
 				eq: 'eq',
 				ne: 'ne',
 				gt: 'gt',

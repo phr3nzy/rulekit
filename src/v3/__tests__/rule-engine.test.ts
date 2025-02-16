@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { AttributeType, type AttributeTypeValue } from '../../core/attributes/types';
-import type { AttributeSchema, TypedEntity } from '../types/schema';
-import { TypedRuleEngine } from '../engine/rule-engine';
+import type { AttributeSchema, Entity } from '../types/schema';
+import { RuleEngine } from '../engine/rule-engine';
 
-describe('TypedRuleEngine', () => {
+describe('RuleEngine', () => {
 	const CATEGORIES = ['electronics', 'furniture', 'clothing'] as const;
 
 	// Test schema definition
@@ -83,7 +83,7 @@ describe('TypedRuleEngine', () => {
 		price: number,
 		inStock: boolean,
 		tags: string[] = [],
-	): TypedEntity<ProductSchema> => ({
+	): Entity<ProductSchema> => ({
 		id,
 		name: `Product ${id}`,
 		attributes: {
@@ -96,7 +96,7 @@ describe('TypedRuleEngine', () => {
 	});
 
 	describe('findMatchingFrom', () => {
-		const engine = new TypedRuleEngine(productSchema);
+		const engine = new RuleEngine(productSchema);
 
 		it('matches entities with simple attribute rules', () => {
 			const entities = [
@@ -201,7 +201,7 @@ describe('TypedRuleEngine', () => {
 						category: 'invalid',
 						__validated: true,
 					},
-				} as TypedEntity<ProductSchema>,
+				} as Entity<ProductSchema>,
 			];
 
 			const rules = [{ attributes: { category: { eq: 'electronics' } } }];
@@ -213,7 +213,7 @@ describe('TypedRuleEngine', () => {
 	});
 
 	describe('findMatchingTo', () => {
-		const engine = new TypedRuleEngine(productSchema);
+		const engine = new RuleEngine(productSchema);
 
 		it('finds matching target entities', () => {
 			const fromEntities = [createProduct('1', 'electronics', 100, true)];
