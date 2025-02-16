@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - v2 functionality moved to `v2` namespace
   - Better organization of legacy exports
   - Enhanced type safety and import experience
+- Minimum node version is now 18
 
 ### Improved
 
