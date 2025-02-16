@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/phr3nzy/rulekit#readme",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "keywords": [
     "rule-engine",
