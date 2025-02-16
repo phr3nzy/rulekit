@@ -1,7 +1,7 @@
 import { bench } from 'vitest';
 import { AttributeType } from '../../core/attributes/types';
-import type { TypedEntity } from '../types/schema';
-import { TypedRuleEngine } from '../engine/rule-engine';
+import type { Entity } from '../types/schema';
+import { RuleEngine } from '../engine/rule-engine';
 
 // Test schema definition
 const CATEGORIES = ['electronics', 'furniture', 'clothing'] as const;
@@ -47,7 +47,7 @@ const createProduct = (
 	price: number,
 	inStock: boolean,
 	tags: string[] = [],
-): TypedEntity<typeof productSchema> => ({
+): Entity<typeof productSchema> => ({
 	id,
 	name: `Product ${id}`,
 	attributes: {
@@ -59,10 +59,10 @@ const createProduct = (
 	},
 });
 
-const engine = new TypedRuleEngine(productSchema);
+const engine = new RuleEngine(productSchema);
 
 // Generate test data
-const generateEntities = (count: number): TypedEntity<typeof productSchema>[] => {
+const generateEntities = (count: number): Entity<typeof productSchema>[] => {
 	return Array.from({ length: count }, (_, i) =>
 		createProduct(
 			`${i}`,

@@ -1,5 +1,53 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.1.0] - 2025-02-16
+
+### Changed
+
+- Restructured exports to make v3 the main API:
+  - v3 functionality now available at root level
+  - v2 functionality moved to `v2` namespace
+  - Better organization of legacy exports
+  - Enhanced type safety and import experience
+- Minimum node version is now 18
+
+### Improved
+
+- Enhanced project organization:
+  - Cleaner export structure
+  - Better namespace organization
+  - Restored complete changelog history
+  - Improved test file organization
+
+### Migration Note
+
+The v3 API is now available directly from the root:
+
+```typescript
+// Before
+import { v3 } from '@phr3nzy/rulekit';
+const { TypedRuleEngine } = v3;
+
+// After
+import { RuleEngine } from '@phr3nzy/rulekit';
+```
+
+Legacy v2 functionality remains available through the v2 namespace:
+
+```typescript
+// Before
+import { RuleEngine } from '@phr3nzy/rulekit';
+
+// After
+import { v2 } from '@phr3nzy/rulekit';
+const { RuleEngine } = v2.ruleEngine;
+```
+
 ## [3.0.0] - 2025-02-08
 
 ### Added
@@ -21,7 +69,7 @@
 
 ### Breaking Changes
 
-- New v3 API uses different import path (`import { v3 } from '@phr3nzy/rulekit'`)
+- New v3 API is now available at root level
 - Type-safe schemas require explicit type definitions
 - Array conditions now support both element and array-level matching
 - Rule evaluation now validates against schema types
@@ -42,15 +90,14 @@
 import { RuleEngine } from '@phr3nzy/rulekit';
 
 // After (v3)
-import { v3 } from '@phr3nzy/rulekit';
-const { TypedRuleEngine } = v3;
+import { RuleEngine, AttributeType } from '@phr3nzy/rulekit';
 ```
 
 #### 2. Define Type-Safe Schema
 
 ```typescript
-import { v3 } from '@phr3nzy/rulekit';
-const { AttributeType } = v3;
+import { AttributeType } from '@phr3nzy/rulekit';
+import type { AttributeSchema } from '@phr3nzy/rulekit';
 
 // Define your schema with type safety
 type ProductSchema = {
@@ -70,7 +117,7 @@ type ProductSchema = {
 			min: 0;
 		};
 	};
-} & v3.AttributeSchema;
+} & AttributeSchema;
 ```
 
 #### 3. Create Type-Safe Engine
@@ -97,14 +144,14 @@ const productSchema: ProductSchema = {
 };
 
 // Create type-safe engine
-const engine = new TypedRuleEngine(productSchema);
+const engine = new RuleEngine(productSchema);
 ```
 
 #### 4. Use Type-Safe Rules
 
 ```typescript
 // Rules are now type-checked
-const rules: v3.TypedRule<ProductSchema>[] = [
+const rules: Rule<ProductSchema>[] = [
 	{
 		attributes: {
 			category: { eq: 'electronics' }, // Type-safe: must be one of the enum values
@@ -114,7 +161,7 @@ const rules: v3.TypedRule<ProductSchema>[] = [
 ];
 
 // Entities are type-checked
-const entities: v3.TypedEntity<ProductSchema>[] = [
+const entities: Entity<ProductSchema>[] = [
 	{
 		id: '1',
 		name: 'Laptop',
@@ -153,16 +200,81 @@ const rule2 = {
 
 ### Backward Compatibility
 
-V2 exports are still available for backward compatibility:
+V2 exports are still available through the v2 namespace:
 
 ```typescript
-// V2 imports still work
+// Before
 import { RuleEngine } from '@phr3nzy/rulekit';
 
-// V3 recommended imports
-import { v3 } from '@phr3nzy/rulekit';
+// After
+import { v2 } from '@phr3nzy/rulekit';
+const { RuleEngine } = v2.ruleEngine;
 ```
 
-## Previous Versions
+## [2.0.2] - 2025-02-08
 
-[Previous changelog entries remain unchanged]
+### Improved
+
+- Enhanced documentation:
+  - Updated performance metrics and benchmarks
+  - Improved code examples to reflect synchronous API
+  - Added detailed performance section
+  - Enhanced contributing guidelines
+  - Added CI/CD pipeline details
+  - Updated feature list to highlight performance
+  - Added recommended installation method (pnpm)
+
+## [2.0.1] - 2025-02-08
+
+### Improved
+
+- Enhanced CI/CD pipeline:
+  - Added comprehensive caching for faster builds:
+    - pnpm store caching for dependencies
+    - Coverage report caching
+    - Build output caching
+  - Improved workflow organization:
+    - Separated test and publish jobs
+    - Added proper job dependencies
+    - Enhanced concurrency handling
+  - Added Codecov integration:
+    - Detailed coverage reporting
+    - Coverage upload with proper configuration
+    - Fail CI on coverage regression
+
+## [2.0.0] - 2025-02-07
+
+### Changed
+
+- **BREAKING**: Converted all operations to synchronous for major performance improvements:
+
+  - Removed async/await from all methods
+  - Optimized rule evaluation engine
+  - Improved batch processing performance
+  - Updated all method signatures to be synchronous
+  - Simplified internal implementations
+
+- Performance optimizations:
+  - Pre-allocated result arrays
+  - Removed unnecessary object creation
+  - Optimized Set usage for O(1) lookups
+  - Smart batch size management based on rule complexity
+  - Fast paths for common operations (eq numeric comparisons)
+  - Optimized operator validation with static Set
+
+### Improved
+
+- Test coverage improvements:
+  - Added comprehensive edge case testing
+  - Improved error handling coverage
+  - Added legacy rule validation tests
+  - Expanded numeric conversion tests
+  - Added null value handling tests
+
+### Performance
+
+- Benchmark results:
+  - Real-world entity matching (100 entities): 54102 ops/sec
+  - Complex nested rules (1000 entities): 2276 ops/sec
+  - Large dataset processing (10000 entities): 247 ops/sec
+  - Matching with multiple entities: 2392 ops/sec

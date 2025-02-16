@@ -3,25 +3,25 @@
  * Provides type-safe rule evaluation and matching
  */
 
-import type { AttributeSchema, TypedEntity, TypedRule } from '../types/schema';
+import type { AttributeSchema, Entity, Rule } from '../types/schema';
 import { isValidSchemaObject } from '../types/schema';
 
 /**
- * Configuration interface for the TypedRuleEngine
+ * Configuration interface for the RuleEngine
  */
-interface TypedRuleEngineConfig {
+interface RuleEngineConfig {
 	maxBatchSize?: number;
 }
 
 /**
  * Enhanced rule engine with generic type support
  */
-export class TypedRuleEngine<TSchema extends AttributeSchema> {
-	private readonly config: Required<TypedRuleEngineConfig>;
+export class RuleEngine<TSchema extends AttributeSchema> {
+	private readonly config: Required<RuleEngineConfig>;
 
 	constructor(
 		private readonly schema: TSchema,
-		config?: Partial<TypedRuleEngineConfig>,
+		config?: Partial<RuleEngineConfig>,
 	) {
 		this.config = {
 			maxBatchSize: 1000,
@@ -32,7 +32,7 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	/**
 	 * Evaluates a single rule against an entity
 	 */
-	private evaluateRule(entity: TypedEntity<TSchema>, rule: TypedRule<TSchema>): boolean {
+	private evaluateRule(entity: Entity<TSchema>, rule: Rule<TSchema>): boolean {
 		// Validate entity against schema
 		if (!isValidSchemaObject(entity.attributes, this.schema)) {
 			return false;
@@ -94,7 +94,7 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	/**
 	 * Splits entities into optimal batch sizes based on complexity
 	 */
-	private getBatchSize(entities: TypedEntity<TSchema>[], rules: TypedRule<TSchema>[]): number {
+	private getBatchSize(entities: Entity<TSchema>[], rules: Rule<TSchema>[]): number {
 		// Start with configured max batch size
 		const entityCount = entities.length;
 		let batchSize = this.config.maxBatchSize;
@@ -102,7 +102,7 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 		// Adjust based on rule complexity
 		const ruleComplexity = rules.reduce((complexity, rule) => {
 			// Count number of conditions in rule
-			const countConditions = (r: TypedRule<TSchema>): number => {
+			const countConditions = (r: Rule<TSchema>): number => {
 				let count = 0;
 				if (r.and) count += r.and.reduce((sum, subRule) => sum + countConditions(subRule), 0);
 				if (r.or) count += r.or.reduce((sum, subRule) => sum + countConditions(subRule), 0);
@@ -123,7 +123,7 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	/**
 	 * Processes entities in optimally-sized batches
 	 */
-	private processBatch(entities: TypedEntity<TSchema>[], rules: TypedRule<TSchema>[]): boolean[] {
+	private processBatch(entities: Entity<TSchema>[], rules: Rule<TSchema>[]): boolean[] {
 		const batchSize = this.getBatchSize(entities, rules);
 		const results = new Array(entities.length);
 		const batches = Math.ceil(entities.length / batchSize);
@@ -153,10 +153,7 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	/**
 	 * Finds entities that satisfy all provided 'from' rules
 	 */
-	findMatchingFrom(
-		entities: TypedEntity<TSchema>[],
-		rules: TypedRule<TSchema>[],
-	): TypedEntity<TSchema>[] {
+	findMatchingFrom(entities: Entity<TSchema>[], rules: Rule<TSchema>[]): Entity<TSchema>[] {
 		const results = this.processBatch(entities, rules);
 		return entities.filter((_, index) => results[index]);
 	}
@@ -165,10 +162,10 @@ export class TypedRuleEngine<TSchema extends AttributeSchema> {
 	 * Finds target entities that can be matched with source entities based on 'to' rules
 	 */
 	findMatchingTo(
-		fromEntities: TypedEntity<TSchema>[],
-		toRules: TypedRule<TSchema>[],
-		allEntities: TypedEntity<TSchema>[],
-	): TypedEntity<TSchema>[] {
+		fromEntities: Entity<TSchema>[],
+		toRules: Rule<TSchema>[],
+		allEntities: Entity<TSchema>[],
+	): Entity<TSchema>[] {
 		// First, filter out 'from' entities from all entities
 		const candidateEntities = allEntities.filter(
 			entity => !fromEntities.some(from => from.id === entity.id),

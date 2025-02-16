@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ProductAttributeRegistry } from '../attributes/registry';
 import { AttributeType } from '../attributes/types';
-import type { Product } from './types';
+import type { Entity } from './types';
+
+// Alias Entity as Product for better semantic meaning in tests
+type Product = Entity;
 
 describe('Product with Dynamic Attributes', () => {
 	let registry: ProductAttributeRegistry;

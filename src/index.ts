@@ -3,24 +3,33 @@
  * @packageDocumentation
  */
 
+// Main exports (v3 type-safe API)
+export * from './v3';
+
 // Legacy v2 exports (for backward compatibility)
-export * from './core/models/types';
-export * from './core/models/validation';
-export * from './core/attributes/types';
-export * from './core/attributes/registry';
-export * from './core/attributes/validator';
-export * from './core/evaluators/types';
-export * from './core/evaluators/base-rule-evaluator';
-export * from './core/services/rule-engine';
-export * from './core/ui/types';
-export * from './core/ui/converter';
-export * from './core/ui/example';
+import * as v2Types from './core/models/types';
+import * as v2Validation from './core/models/validation';
+import * as v2AttributeTypes from './core/attributes/types';
+import * as v2AttributeRegistry from './core/attributes/registry';
+import * as v2AttributeValidator from './core/attributes/validator';
+import * as v2EvaluatorTypes from './core/evaluators/types';
+import * as v2RuleEvaluator from './core/evaluators/base-rule-evaluator';
+import * as v2RuleEngine from './core/services/rule-engine';
+import * as v2UiTypes from './core/ui/types';
+import * as v2UiConverter from './core/ui/converter';
+import * as v2UiExample from './core/ui/example';
 
-// v3 exports (new type-safe API)
-export * as v3 from './v3';
-
-// Export v3 as the default export for new users
-import * as v3Export from './v3';
-export default {
-	v3: v3Export,
+// Export v2 as a namespace for legacy users
+export const v2 = {
+	...v2Types,
+	validation: v2Validation,
+	attributeTypes: v2AttributeTypes,
+	attributeRegistry: v2AttributeRegistry,
+	attributeValidator: v2AttributeValidator,
+	evaluatorTypes: v2EvaluatorTypes,
+	ruleEvaluator: v2RuleEvaluator,
+	ruleEngine: v2RuleEngine,
+	uiTypes: v2UiTypes,
+	uiConverter: v2UiConverter,
+	uiExample: v2UiExample,
 };

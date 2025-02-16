@@ -1,6 +1,6 @@
 {
   "name": "@phr3nzy/rulekit",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A powerful and flexible toolkit for building rule-based matching and filtering systems",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/phr3nzy/rulekit#readme",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "keywords": [
     "rule-engine",

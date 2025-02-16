@@ -31,7 +31,7 @@ export type ExtractAttributeValue<
 /**
  * Validation rule with improved type safety
  */
-export type TypedValidationRule<T extends AttributeTypeValue> = {
+export type ValidationRule<T extends AttributeTypeValue> = {
 	type: T;
 	required?: boolean;
 	min?: T extends typeof AttributeType.NUMBER
@@ -59,7 +59,7 @@ export type TypedValidationRule<T extends AttributeTypeValue> = {
 export interface AttributeSchema {
 	[key: string]: {
 		type: AttributeTypeValue;
-		validation: TypedValidationRule<AttributeTypeValue>;
+		validation: ValidationRule<AttributeTypeValue>;
 	};
 }
 
@@ -67,7 +67,7 @@ export interface AttributeSchema {
  * Utility type to extract the actual value type from a schema field
  */
 export type ExtractSchemaValue<
-	T extends { type: AttributeTypeValue; validation: TypedValidationRule<AttributeTypeValue> },
+	T extends { type: AttributeTypeValue; validation: ValidationRule<AttributeTypeValue> },
 > = ExtractAttributeValue<
 	T['type'],
 	T['type'] extends typeof AttributeType.ARRAY ? T['validation']['arrayType'] : undefined
@@ -76,23 +76,23 @@ export type ExtractSchemaValue<
 /**
  * Type-safe attributes object derived from schema
  */
-export type TypedAttributes<TSchema extends AttributeSchema> = {
+export type Attributes<TSchema extends AttributeSchema> = {
 	[K in keyof TSchema]: ExtractSchemaValue<TSchema[K]>;
 } & { readonly __validated: boolean };
 
 /**
  * Type-safe entity with generic schema
  */
-export type TypedEntity<TSchema extends AttributeSchema> = {
+export type Entity<TSchema extends AttributeSchema> = {
 	id: string;
 	name: string;
-	attributes: TypedAttributes<TSchema>;
+	attributes: Attributes<TSchema>;
 };
 
 /**
  * Available comparison operators with type safety
  */
-export const TypedComparisonOperators = {
+export const ComparisonOperators = {
 	eq: 'eq',
 	ne: 'ne',
 	gt: 'gt',
@@ -103,16 +103,16 @@ export const TypedComparisonOperators = {
 	notIn: 'notIn',
 } as const;
 
-export type TypedComparisonOperator = keyof typeof TypedComparisonOperators;
+export type ComparisonOperator = keyof typeof ComparisonOperators;
 
 /**
  * Type-safe filter based on attribute type
  */
-export type TypedFilter<
+export type Filter<
 	T extends AttributeTypeValue,
 	TArrayType extends AttributeTypeValue | undefined = undefined,
 > = {
-	[K in TypedComparisonOperator]?: K extends 'in' | 'notIn'
+	[K in ComparisonOperator]?: K extends 'in' | 'notIn'
 		? T extends typeof AttributeType.ARRAY
 			? TArrayType extends AttributeTypeValue
 				? Array<ExtractAttributeValue<TArrayType>>
@@ -124,11 +124,11 @@ export type TypedFilter<
 /**
  * Type-safe rule with generic schema
  */
-export type TypedRule<TSchema extends AttributeSchema> = {
-	and?: Array<TypedRule<TSchema>>;
-	or?: Array<TypedRule<TSchema>>;
+export type Rule<TSchema extends AttributeSchema> = {
+	and?: Array<Rule<TSchema>>;
+	or?: Array<Rule<TSchema>>;
 	attributes?: {
-		[K in keyof TSchema]?: TypedFilter<
+		[K in keyof TSchema]?: Filter<
 			TSchema[K]['type'],
 			TSchema[K]['type'] extends typeof AttributeType.ARRAY
 				? TSchema[K]['validation']['arrayType']
@@ -140,19 +140,19 @@ export type TypedRule<TSchema extends AttributeSchema> = {
 /**
  * Type-safe rule set with generic schema
  */
-export type TypedRuleSet<TSchema extends AttributeSchema> = {
-	fromRules: TypedRule<TSchema>[];
-	toRules: TypedRule<TSchema>[];
+export type RuleSet<TSchema extends AttributeSchema> = {
+	fromRules: Rule<TSchema>[];
+	toRules: Rule<TSchema>[];
 };
 
 /**
  * Type-safe matching configuration with generic schema
  */
-export type TypedMatchingConfig<TSchema extends AttributeSchema> = {
+export type MatchingConfig<TSchema extends AttributeSchema> = {
 	id: string;
 	name: string;
 	description?: string;
-	ruleSet: TypedRuleSet<TSchema>;
+	ruleSet: RuleSet<TSchema>;
 	isActive: boolean;
 	createdAt: Date;
 	updatedAt: Date;
@@ -195,7 +195,7 @@ export function isValidAttributeValue<T extends AttributeTypeValue>(
 export function isValidSchemaObject<TSchema extends AttributeSchema>(
 	obj: unknown,
 	schema: TSchema,
-): obj is TypedAttributes<TSchema> {
+): obj is Attributes<TSchema> {
 	if (!obj || typeof obj !== 'object') return false;
 
 	const attributes = obj as Record<string, unknown>;
