@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2025-02-16
+
+### Changed
+
+- Restructured exports to make v3 the main API:
+  - v3 functionality now available at root level
+  - v2 functionality moved to `v2` namespace
+  - Better organization of legacy exports
+  - Enhanced type safety and import experience
+
+### Improved
+
+- Enhanced project organization:
+  - Cleaner export structure
+  - Better namespace organization
+  - Restored complete changelog history
+  - Improved test file organization
+
+### Migration Note
+
+The v3 API is now available directly from the root:
+
+```typescript
+// Before
+import { v3 } from '@phr3nzy/rulekit';
+const { TypedRuleEngine } = v3;
+
+// After
+import { TypedRuleEngine } from '@phr3nzy/rulekit';
+```
+
+Legacy v2 functionality remains available through the v2 namespace:
+
+```typescript
+// Before
+import { RuleEngine } from '@phr3nzy/rulekit';
+
+// After
+import { v2 } from '@phr3nzy/rulekit';
+const { RuleEngine } = v2.ruleEngine;
+```
+
 ## [3.0.0] - 2025-02-08
 
 ### Added
