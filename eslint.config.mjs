@@ -16,7 +16,7 @@ const typescriptPluginConfig = {
 	},
 };
 
-/** @type {Array<import('eslint').Linter.FlatConfig>} */
+/** @type {Array<import('eslint').Linter.Config>} */
 export default [
 	// Base JS config with globals
 	{

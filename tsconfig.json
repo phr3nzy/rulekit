@@ -36,10 +36,11 @@
 	},
 	"include": [
 		"src/**/*",
-		"vitest.config.ts"
+		"vitest.config.ts",
+		"examples/**/*"
 	],
 	"exclude": [
 		"node_modules",
-		"dist"
+		"dist",
 	]
 }
