@@ -3,6 +3,7 @@
 A powerful and flexible toolkit for building intelligent filtering, matching, and rule-based systems. RuleKit combines high-performance rule evaluation with smart interface generation and data analysis.
 
 [![npm version](https://badge.fury.io/js/@phr3nzy%2Frulekit.svg)](https://badge.fury.io/js/@phr3nzy%2Frulekit)
+[![codecov](https://codecov.io/gh/phr3nzy/rulekit/graph/badge.svg?token=SxxopHV1x3)](https://codecov.io/gh/phr3nzy/rulekit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## What is RuleKit?
