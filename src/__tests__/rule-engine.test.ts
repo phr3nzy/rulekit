@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AttributeType, type AttributeTypeValue } from '../../core/attributes/types';
+import { AttributeType, type AttributeTypeValue } from '../attributes/types';
 import type { AttributeSchema, Entity } from '../types/schema';
 import { RuleEngine } from '../engine/rule-engine';
 

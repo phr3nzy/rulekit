@@ -3,8 +3,8 @@
  * Provides type-safe schema definitions and utilities
  */
 
-import { AttributeType } from '../../core/attributes/types';
-import type { AttributeTypeValue } from '../../core/attributes/types';
+import { AttributeType } from '../attributes/types';
+import type { AttributeTypeValue } from '../attributes/types';
 
 /**
  * Type-level utility to extract the actual value type from an attribute type
