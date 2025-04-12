@@ -162,6 +162,47 @@ describe('Attribute Validator', () => {
 		});
 	});
 
+	describe('Optional Validation', () => {
+		const optionalDef = {
+			name: 'testOptional',
+			type: AttributeType.STRING,
+			description: 'Test optional attribute',
+			validation: {
+				type: AttributeType.STRING,
+				required: false, // Explicitly not required
+			},
+		};
+
+		it('should allow undefined for optional attributes', async () => {
+			await expect(
+				validateAttribute('testOptional', undefined, optionalDef),
+			).resolves.toBeUndefined();
+		});
+
+		it('should allow null for optional attributes', async () => {
+			await expect(validateAttribute('testOptional', null, optionalDef)).resolves.toBeUndefined();
+		});
+
+		it('should still validate provided values for optional attributes', async () => {
+			const optionalNumberDef = {
+				name: 'testOptionalNum',
+				type: AttributeType.NUMBER,
+				description: 'Test optional number',
+				validation: {
+					type: AttributeType.NUMBER,
+					required: false,
+					min: 10,
+				},
+			};
+			await expect(validateAttribute('testOptionalNum', 5, optionalNumberDef)).rejects.toThrow(
+				AttributeValidationError,
+			);
+			await expect(
+				validateAttribute('testOptionalNum', 15, optionalNumberDef),
+			).resolves.toBeUndefined();
+		});
+	});
+
 	describe('Custom Validation', () => {
 		const customDef = {
 			name: 'test',

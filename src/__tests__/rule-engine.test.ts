@@ -181,6 +181,73 @@ describe('RuleEngine', () => {
 			expect(matches[0].id).toBe('1');
 		});
 
+		it('matches entities with numeric comparison operators (gt, gte, lt, lte)', () => {
+			const entities = [
+				createProduct('1', 'electronics', 50, true),
+				createProduct('2', 'furniture', 100, false),
+				createProduct('3', 'electronics', 150, true),
+				createProduct('4', 'clothing', 100, true),
+			];
+
+			// GT
+			const rulesGt = [{ attributes: { price: { gt: 100 } } }];
+			const matchesGt = engine.findMatchingFrom(entities, rulesGt);
+			expect(matchesGt).toHaveLength(1);
+			expect(matchesGt[0].id).toBe('3');
+
+			// GTE
+			const rulesGte = [{ attributes: { price: { gte: 100 } } }];
+			const matchesGte = engine.findMatchingFrom(entities, rulesGte);
+			expect(matchesGte).toHaveLength(3);
+			expect(matchesGte.map(m => m.id)).toEqual(['2', '3', '4']);
+
+			// LT (already tested, but included for completeness)
+			const rulesLt = [{ attributes: { price: { lt: 100 } } }];
+			const matchesLt = engine.findMatchingFrom(entities, rulesLt);
+			expect(matchesLt).toHaveLength(1);
+			expect(matchesLt[0].id).toBe('1');
+
+			// LTE
+			const rulesLte = [{ attributes: { price: { lte: 100 } } }];
+			const matchesLte = engine.findMatchingFrom(entities, rulesLte);
+			expect(matchesLte).toHaveLength(3);
+			expect(matchesLte.map(m => m.id)).toEqual(['1', '2', '4']);
+		});
+
+		it('matches entities with "in" operator on non-array attributes', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true),
+				createProduct('2', 'furniture', 200, false),
+				createProduct('3', 'clothing', 300, true),
+			];
+			const rules = [{ attributes: { category: { in: ['electronics', 'clothing'] } } }];
+			const matches = engine.findMatchingFrom(entities, rules);
+			expect(matches).toHaveLength(2);
+			expect(matches.map(m => m.id)).toEqual(['1', '3']);
+		});
+
+		it('matches entities with "notIn" operator', () => {
+			const entities = [
+				createProduct('1', 'electronics', 100, true, ['new', 'featured']),
+				createProduct('2', 'furniture', 200, false, ['sale']),
+				createProduct('3', 'clothing', 300, true, ['new']),
+			];
+
+			// notIn on non-array
+			const rulesNotInNonArray = [
+				{ attributes: { category: { notIn: ['electronics', 'furniture'] } } },
+			];
+			const matchesNotInNonArray = engine.findMatchingFrom(entities, rulesNotInNonArray);
+			expect(matchesNotInNonArray).toHaveLength(1);
+			expect(matchesNotInNonArray[0].id).toBe('3');
+
+			// notIn on array
+			const rulesNotInArray = [{ attributes: { tags: { notIn: ['featured', 'sale'] } } }];
+			const matchesNotInArray = engine.findMatchingFrom(entities, rulesNotInArray);
+			expect(matchesNotInArray).toHaveLength(1);
+			expect(matchesNotInArray[0].id).toBe('3'); // Only product 3 has 'new' but not 'featured' or 'sale'
+		});
+
 		it('handles empty rules', () => {
 			const entities = [
 				createProduct('1', 'electronics', 100, true),
