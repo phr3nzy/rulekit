@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0] - 2025-04-18
+
+### Changed
+
+- Standardized exports to be consistent with v3 (default export now).
+- Optimized rule engine performance by reducing redundant schema validations within recursive rule evaluations.
+- Implemented short-circuiting in batch processing to stop evaluating rules for an entity as soon as one rule fails.
+
+### Improved
+
+- Rule engine evaluation efficiency, especially for complex rules and large datasets.
+
+---
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
