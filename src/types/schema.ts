@@ -3,8 +3,8 @@
  * Provides type-safe schema definitions and utilities
  */
 
-import { AttributeType } from '../../core/attributes/types';
-import type { AttributeTypeValue } from '../../core/attributes/types';
+import { AttributeType } from '../attributes/types';
+import type { AttributeTypeValue } from '../attributes/types';
 
 /**
  * Type-level utility to extract the actual value type from an attribute type
@@ -108,17 +108,44 @@ export type ComparisonOperator = keyof typeof ComparisonOperators;
 /**
  * Type-safe filter based on attribute type
  */
+
+// Helper type for numeric operators
+type NumericFilterValue<T extends AttributeTypeValue> = T extends typeof AttributeType.NUMBER
+	? number
+	: never;
+
+// Helper type for equality operators (can apply to most primitive types)
+type EqualityFilterValue<
+	T extends AttributeTypeValue,
+	TArrayType extends AttributeTypeValue | undefined,
+> = T extends typeof AttributeType.ARRAY
+	? TArrayType extends AttributeTypeValue
+		? Array<ExtractAttributeValue<TArrayType>>
+		: unknown[]
+	: ExtractAttributeValue<T>;
+
+// Helper type for array operators
+type ArrayFilterValue<
+	T extends AttributeTypeValue,
+	TArrayType extends AttributeTypeValue | undefined,
+> = T extends typeof AttributeType.ARRAY
+	? TArrayType extends AttributeTypeValue
+		? Array<ExtractAttributeValue<TArrayType>> // If attribute is array, expect array of element type
+		: unknown[]
+	: Array<ExtractAttributeValue<T>>; // If attribute is not array, expect array of attribute type
+
 export type Filter<
 	T extends AttributeTypeValue,
 	TArrayType extends AttributeTypeValue | undefined = undefined,
 > = {
-	[K in ComparisonOperator]?: K extends 'in' | 'notIn'
-		? T extends typeof AttributeType.ARRAY
-			? TArrayType extends AttributeTypeValue
-				? Array<ExtractAttributeValue<TArrayType>>
-				: unknown[]
-			: Array<ExtractAttributeValue<T>>
-		: ExtractAttributeValue<T, TArrayType>;
+	eq?: EqualityFilterValue<T, TArrayType>;
+	ne?: EqualityFilterValue<T, TArrayType>;
+	gt?: NumericFilterValue<T>;
+	gte?: NumericFilterValue<T>;
+	lt?: NumericFilterValue<T>;
+	lte?: NumericFilterValue<T>;
+	in?: ArrayFilterValue<T, TArrayType>;
+	notIn?: ArrayFilterValue<T, TArrayType>;
 };
 
 /**

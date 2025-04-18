@@ -103,9 +103,6 @@ import type { Component, ComponentConstraints } from '@phr3nzy/rulekit';
 
 // Data analysis
 import { Analyzer, type DataStatistics } from '@phr3nzy/rulekit';
-
-// Legacy v2 functionality (if needed)
-import { v2 } from '@phr3nzy/rulekit';
 ```
 
 ## Quick Start
@@ -245,10 +242,6 @@ const matches = engine.findMatchingFrom(largeEntityList, rules);
 - Simple rules (1000 entities): 936 ops/sec
 - Complex rules (1000 entities): 260 ops/sec
 - Large dataset (10000 entities): 87 ops/sec
-
-## Migration from v2
-
-See the [CHANGELOG.md](CHANGELOG.md) for detailed migration guide.
 
 ## License
 

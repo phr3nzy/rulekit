@@ -1,5 +1,5 @@
 import { bench } from 'vitest';
-import { AttributeType } from '../../core/attributes/types';
+import { AttributeType } from '../attributes/types';
 import type { Entity } from '../types/schema';
 import { RuleEngine } from '../engine/rule-engine';
 

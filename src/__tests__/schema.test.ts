@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AttributeType } from '../../core/attributes/types';
+import { AttributeType } from '../attributes/types';
 import {
 	isValidAttributeValue,
 	isValidSchemaObject,
